@@ -49,6 +49,16 @@ export function App({ terminal }: { terminal: TerminalBuffer }) {
     term.current?.scrollToEnd();
   }, [view]);
 
+  // Closing a card hands the keyboard back to the command line, where the player left it.
+  const hadModal = useRef(false);
+  useEffect(() => {
+    if (modal) hadModal.current = true;
+    else if (hadModal.current) {
+      hadModal.current = false;
+      if (view.pane === 'term' && isWide()) term.current?.focus();
+    }
+  }, [modal]);
+
   useGameEvent('complete', (e) => setOutcome({ kind: 'complete', ...e }));
   useGameEvent('fail', ({ session, reason }) => setOutcome({ kind: 'fail', session, reason }));
   const chatIdle = shown >= (session?.chat.length ?? 0);
@@ -103,7 +113,8 @@ export function App({ terminal }: { terminal: TerminalBuffer }) {
   const next = session && game.isBuilt(session.level.id + 1) ? session.level.id + 1 : null;
   return (
     <>
-      <div className="app">
+      {/* Behind a card, the office can't be focused or clicked, and screen readers skip it. */}
+      <div className="app" inert={!!modal}>
         <Header onPickLevel={pickLevel} />
         <Tabs current={view.pane} dots={dots} onShow={showPane} />
         <main className="desk" id="desk" data-pane={view.pane}>

@@ -52,7 +52,7 @@ export function Modals({ modal, onClose, onStart, onLoad }: Props) {
     card = (
       <>
         <div className="eyebrow">{t({ ar: 'الفريق لاحظ مشكلة', en: 'The team spotted a problem' })}</div>
-        <h2>{t({ ar: 'المهمة ما اكتملت', en: 'The task isn’t done' })}</h2>
+        <h2 id="modalTitle">{t({ ar: 'المهمة ما اكتملت', en: 'The task isn’t done' })}</h2>
         <p className="lead">
           <Md text={t(modal.reason)} />
         </p>
@@ -75,7 +75,7 @@ export function Modals({ modal, onClose, onStart, onLoad }: Props) {
   } else if (modal?.kind === 'confirm') {
     card = (
       <>
-        <h2>{t(modal.title)}</h2>
+        <h2 id="modalTitle">{t(modal.title)}</h2>
         <p>{t(modal.text)}</p>
         <div className="actions">
           <button type="button" className="btn primary" id="yes" onClick={then(modal.onOk)}>
@@ -101,7 +101,7 @@ export function Modals({ modal, onClose, onStart, onLoad }: Props) {
       }}
     >
       {card && (
-        <div className="card" role="dialog" aria-modal="true">
+        <div className="card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
           {card}
         </div>
       )}
@@ -118,7 +118,7 @@ function Welcome({ onStart }: { onStart: (name: string) => void }) {
         <div className="eyebrow">{t({ ar: 'فريق بُن · المكتب الافتراضي', en: 'Bun team · Virtual office' })}</div>
         <LangToggle />
       </div>
-      <h2>{t({ ar: 'حياك في أول وظيفة لك', en: 'Welcome to your first job' })}</h2>
+      <h2 id="modalTitle">{t({ ar: 'حياك في أول وظيفة لك', en: 'Welcome to your first job' })}</h2>
       <p className="lead">
         {t({
           ar: 'بتشتغل مع فريق صغير على موقع مقهى بُن. المدير والزملاء شخصيات افتراضية، والتيرمينال يشتغل مثل git الحقيقي.',
@@ -201,7 +201,7 @@ function Complete({
       {promotedTo ? (
         <>
           <div className="eyebrow">{t({ ar: 'ترقية', en: 'Promotion' })}</div>
-          <h2>{t({ ar: 'صرت ' + promotedTo.en, en: 'You’re a ' + promotedTo.en + ' now' })}</h2>
+          <h2 id="modalTitle">{t({ ar: 'صرت ' + promotedTo.en, en: 'You’re a ' + promotedTo.en + ' now' })}</h2>
           <Stars n={stars} />
           <p className="quote">
             {t({
@@ -226,7 +226,7 @@ function Complete({
       ) : (
         <>
           <div className="eyebrow">{'LEVEL ' + lv.id + ' COMPLETE'}</div>
-          <h2>{t({ ar: 'خلّصت «' + lv.title.ar + '»', en: 'You finished “' + lv.title.en + '”' })}</h2>
+          <h2 id="modalTitle">{t({ ar: 'خلّصت «' + lv.title.ar + '»', en: 'You finished “' + lv.title.en + '”' })}</h2>
           <Stars n={stars} />
           {facts}
         </>
