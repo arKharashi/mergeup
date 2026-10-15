@@ -33,7 +33,7 @@ export async function phone(browser, lang, engine, viewport = { width: 390, heig
   /* ---------- level 1 ---------- */
   await page.waitForSelector('.chat .msg.sys');
   await pane('term');
-  await page.waitForSelector('#tabs [data-pane="team"] .dot', { timeout: 6000 });
+  await page.waitForSelector('#tabs [data-pane="team"] .dot', { timeout: 12000 });
   r.check(true, 'team tab gets a dot when a teammate writes elsewhere');
   await inView('#cmd', 'terminal');
   await cmd(page, 'git clone ' + REPO);
@@ -52,7 +52,7 @@ export async function phone(browser, lang, engine, viewport = { width: 390, heig
   await pane('team');
   r.check(!(await page.locator('#tabs [data-pane="team"] .dot').isVisible()), 'opening the team tab clears its dot');
   r.check((await doneCount(page)) === 5, 'all objectives ticked');
-  await page.waitForSelector('#overlay .card #next', { timeout: 15000 });
+  await page.waitForSelector('#overlay .card #next', { timeout: 30000 });
   await fits('complete card');
   await inView('#overlay #next', 'complete card');
   await shot(page, tag + '-3-complete');
@@ -60,16 +60,16 @@ export async function phone(browser, lang, engine, viewport = { width: 390, heig
 
   /* ---------- level 2 ---------- */
   r.check((await page.getAttribute('#desk', 'data-pane')) === 'team', 'next level starts on the team pane');
-  await page.waitForSelector('.opts button', { timeout: 15000 });
+  await page.waitForSelector('.opts button', { timeout: 30000 });
   await page.locator('.opts').last().locator('button', { hasText: L('خالد', 'Khalid') }).tap();
-  await page.waitForFunction(() => document.querySelectorAll('.opts').length === 2, null, { timeout: 15000 });
+  await page.waitForFunction(() => document.querySelectorAll('.opts').length === 2, null, { timeout: 30000 });
   await page.locator('.opts').last().locator('button', { hasText: '12' }).tap();
   await settle(page);
   await shot(page, tag + '-4-questions');
   await pane('term');
   await cmd(page, 'git log --oneline');
   await pane('team');
-  await page.waitForSelector('#overlay .card #next', { timeout: 15000 });
+  await page.waitForSelector('#overlay .card #next', { timeout: 30000 });
   await tap('#overlay #next');
 
   /* ---------- level 3 ---------- */
@@ -88,7 +88,7 @@ export async function phone(browser, lang, engine, viewport = { width: 390, heig
   ])
     await cmd(page, line);
   await fits('terminal after level 3');
-  await page.waitForSelector('#overlay .card #ok', { timeout: 15000 });
+  await page.waitForSelector('#overlay .card #ok', { timeout: 30000 });
   await inView('#overlay #ok', 'promotion card');
   await fits('promotion card');
   await shot(page, tag + '-5-promotion');

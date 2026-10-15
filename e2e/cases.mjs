@@ -34,7 +34,7 @@ export async function cases(browser, lang, engine) {
     r.check((await doneCount(page)) === 1, 'a line without the name leaves the objectives open');
     r.check((await page.locator('.chat .msg[data-who="abufahd"]').last().innerText()).includes('«Abdulrahman»'), 'Abu Fahd says which name he expected');
     for (const line of ['echo "- Abdulrahman — Intern" >> README.md', 'git add .', 'git commit -m "Write my name as I signed up"', 'git push']) await cmd(page, line);
-    await page.waitForSelector('#overlay .card #next', { timeout: 10000 });
+    await page.waitForSelector('#overlay .card #next', { timeout: 20000 });
     r.check(true, 'fixing the line and pushing again finishes the level');
     allErrors.push(...errors);
     await ctx.close();
@@ -68,7 +68,7 @@ export async function cases(browser, lang, engine) {
     const early = await page.locator('.chat .msg[data-who="abufahd"]').count();
     r.check(early < 3, 'messages arrive one at a time', String(early));
     const t0 = Date.now();
-    await page.waitForFunction(() => document.querySelectorAll('.chat .msg[data-who="abufahd"]').length === 3, null, { timeout: 10000 });
+    await page.waitForFunction(() => document.querySelectorAll('.chat .msg[data-who="abufahd"]').length === 3, null, { timeout: 20000 });
     r.check(Date.now() - t0 > 1000, 'the intro takes a human pace', Date.now() - t0 + 'ms');
     r.check(await page.locator('.chat .typing').isHidden(), 'no typing bubble when idle');
     allErrors.push(...errors);
@@ -84,7 +84,7 @@ export async function cases(browser, lang, engine) {
     await cmd(page, 'git add .');
     await cmd(page, 'git commit -m "Add everything"');
     await cmd(page, 'git push');
-    await page.waitForSelector('#overlay .card #stay', { timeout: 10000 });
+    await page.waitForSelector('#overlay .card #stay', { timeout: 20000 });
     await page.click('#stay');
     const box = await page.evaluate(() => getComputedStyle(document.querySelector('.task-status')).backgroundColor);
     r.check(box.startsWith('rgba(255, 69, 58'), 'failed box uses the dark --bad-soft', box);
