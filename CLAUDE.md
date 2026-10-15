@@ -22,7 +22,8 @@ npm run build        # -> dist/
 ```
 
 In dev, the console exposes the game: `__game.loadLevel(3)`, `__game.run('git log --oneline')`,
-`__game.progress.unlocked = 16` (open every built level), `__game.session.world` (inspect repos).
+`__game.progress.unlocked = 16` (open every built level; the header shows it after the next game event, such as
+`__game.loadLevel(1)`), `__game.session.world` (inspect repos).
 
 ## Architecture
 
@@ -34,14 +35,17 @@ src/
     shell.ts Tokenizer (quotes, &&, ;, >, >>) and shell builtins (ls, cd, cat, echo, touch, rm, help...).
   game/      Game class (sessions, objectives, reputation, stars, chat, files), Level types, ranks, NPC team, progress.
   levels/    One file per level, plus fixtures.ts: the bun-cafe project and its scripted history.
-  ui/        DOM views only (terminal, chat, task card, files, header, overlays, panes). No game logic.
+  ui/        React 19 components, one per panel: Header, Tabs, TaskCard, ChatPanel, Terminal, FilesPanel, Modals,
+             Toasts, composed by App. Plus gameContext (GameProvider, useGame), terminalBuffer, chatPace. No game logic.
+  main.tsx   Creates the TerminalBuffer and the Game, resumes the last level, renders <App> under <GameProvider>.
 tests/       Engine behaviour vs real git, and every level's scripted solution must earn 3 stars.
 docs/        design.md
 ```
 
-Flow of one command: `TerminalView` → `game.run(line)` → `runLine(ctx)` mutates the `World` and prints to `Out`
-→ engine hooks (`onCommit`, `onPush`) → the level reacts through `LevelApi` (`say`, `tip`, `rep`, `fail`)
-→ the game checks objectives → events (`change`, `chat`, `rep`, `complete`, `fail`) → views re-render.
+Flow of one command: `Terminal` → `game.run(line)` → `runLine(ctx)` mutates the `World` and prints to `Out`
+(the UI's `TerminalBuffer`) → engine hooks (`onCommit`, `onPush`) → the level reacts through `LevelApi`
+(`say`, `tip`, `rep`, `fail`) → the game checks objectives → events (`change`, `chat`, `rep`, `complete`, `fail`)
+→ each event bumps `game.getVersion()` and calls `game.subscribe` listeners → components using `useGame()` re-render.
 
 Key types:
 - `World` (`src/engine/types.ts`): `remote` (the team's repo), `local` (the player's clone or null), `cwd`, `me`.
@@ -83,7 +87,7 @@ Use `/new-level <n>` (see `.claude/commands/new-level.md`) or follow this checkl
 ## Copy and characters
 
 - Player-facing text is Saudi Arabic dialect: short, friendly, concrete. "حياك في الفريق"، "وش تغيّر"، "ارفعه للفريق".
-- Wrap commands, file names and paths in backticks; `md()` turns them into `<code>`, which is isolated LTR.
+- Wrap commands, file names and paths in backticks; `<Md text={…} />` turns them into `<code>`, which is isolated LTR.
 - Keep each NPC in character (`src/game/team.ts`): أبو فهد calm and explains why; خالد strict and terse;
   سارة fast and merges without asking; نورة helpful; ريان eager and careless; سلمان unsure.
 - Commit messages, file names and code inside the bun-cafe project are English.
@@ -96,8 +100,23 @@ Use `/new-level <n>` (see `.claude/commands/new-level.md`) or follow this checkl
 - Fonts: Reem Kufi (display), IBM Plex Sans Arabic (body), IBM Plex Mono (terminal and code).
 - Layout: desktop three columns (task + chat, terminal, files); tablet two with tabs; phone one pane with tabs.
   Check 390px wide: no horizontal page scroll.
-- The chat paces NPC messages ("typing…"); overlays wait for the chat to finish (`chat.whenIdle()`).
+- The chat paces NPC messages ("typing…"): `useChatPace` reveals `session.chat` one message at a time.
+  The level complete/fail card waits until every message is on screen.
 - Respect `prefers-reduced-motion`.
+
+### React
+
+- React 19, under `StrictMode` in dev (effects run twice on mount, so every subscription must clean up).
+- The `Game` is the source of truth. Components read it during render through `useGame()`, which is
+  `useSyncExternalStore` over `game.subscribe` / `game.getVersion`, and call its methods from event handlers.
+  React state holds only what the game doesn't: the open pane, the editor draft, the open modal, chat pacing.
+- One-off reactions to an event (a toast, the complete card) use `useGameEvent(event, fn)`, not `useGame()`.
+- The terminal's output is a `TerminalBuffer`, the engine's `Out`. `Terminal` renders it; `game.loadLevel` clears it.
+- Panels with per-level state (`TaskCard`, `FilesPanel`) get `key={session id}`, so loading a level resets them.
+- No `innerHTML` or `dangerouslySetInnerHTML`. Arabic copy with backticks goes through `<Md>`.
+- `styles.css` targets the existing classes, ids and data attributes (`#term`, `.msg[data-who]`, `.desk[data-pane]`).
+  Keep them when you change markup.
+- Components are PascalCase `.tsx`, one per file; hooks and helpers are camelCase.
 
 ## Storage
 
