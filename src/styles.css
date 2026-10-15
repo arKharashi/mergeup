@@ -478,6 +478,9 @@ code, .mono { font-family: var(--f-mono); }
 @media (max-height: 520px) {
   .app { gap: 6px; padding-block: 6px; }
   .brand small { display: none; }
+  .brand h1 { font-size: 1.25rem; }
+  /* The task card's eyebrow still shows the rank; a third header row would squeeze the terminal. */
+  .rank { display: none; }
   .tabs button { padding-block: 5px; }
   .col-head { min-height: 34px; padding-block: 5px; }
   .task { padding-block: 10px 8px; gap: 6px; }
