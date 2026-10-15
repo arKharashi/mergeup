@@ -20,7 +20,11 @@ npm run test:watch
 npm run typecheck
 npm run check        # typecheck + tests. Run before every commit.
 npm run build        # -> dist/
+npm run e2e          # plays the game in real browsers (first time: npx playwright-core install chromium)
 ```
+
+`npm run e2e` starts its own dev server on port 5190. `E2E_BROWSERS=chromium,webkit,firefox` picks the engines
+and `E2E_SUITES=course,cases,phone,sizes` the suites (`sizes`, 25 screen sizes in both languages, is slow and off by default).
 
 In dev, the console exposes the game: `__game.loadLevel(3)`, `__game.run('git log --oneline')`,
 `__game.progress.unlocked = 16` (open every built level; the header shows it after the next game event, such as
@@ -41,6 +45,7 @@ src/
              terminalBuffer, chatPace. No game logic.
   main.tsx   Creates the TerminalBuffer and the Game, resumes the last level, renders <App> under the providers.
 tests/       Engine behaviour vs real git, and every level's scripted solution must earn 3 stars.
+e2e/         Browser tests (Playwright): the whole course with its traps, special cases, phones, screen sizes.
 docs/        design.md
 ```
 
@@ -88,7 +93,7 @@ Use `/new-level <n>` (see `.claude/commands/new-level.md`) or follow this checkl
 9. `solution(player)`: a script that beats the level. `tests/levels.test.ts` plays it, requires 3 stars, and checks
    that everything the player reads along the way has Arabic and English.
 10. Add tests for the level's traps (what happens when the player does the wrong thing).
-11. `npm run check`, then play it in the browser at desktop and phone width.
+11. `npm run check`, then play it in the browser at desktop and phone width. Extend `e2e/course.mjs` to play it, and run `npm run e2e`.
 
 ## Copy and characters
 
