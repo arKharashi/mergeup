@@ -1,6 +1,7 @@
 import type { Ctx } from './context';
 import { git } from './git';
 import { inRepo } from './repo';
+import type { World } from './types';
 
 /**
  * Splits a command line into words. Handles 'single' and "double" quotes,
@@ -117,12 +118,78 @@ function exec(ctx: Ctx, args: string[]): boolean {
       ctx.out.print('bash: ' + cmd + ': command not available here', 'r');
       ctx.out.tip('عدّل الملفات من لوحة «الملفات»، أو بـ `echo "نص" >> file`.');
       return false;
-    default:
+    default: {
+      const path = cmd.replace(/^~(?=\/|$)/, '/home/dev');
+      // bash doesn't look up a word with a slash as a command: it tries to run the file at that path.
+      if (path.includes('/')) return runPath(ctx, path);
       ctx.out.print('bash: ' + cmd + ': command not found', 'r');
       if (/^(status|add|commit|push|pull|log|clone|diff|show)$/.test(cmd)) ctx.out.tip('نسيت كلمة `git` قبل الأمر. جرّب: `git ' + cmd + '`');
+      else if (isRepoUrl(cmd)) urlTip(ctx, cmd);
       else ctx.out.tip('اكتب `help` تشوف الأوامر المتاحة.');
       return false;
+    }
   }
+}
+
+const isRepoUrl = (s: string): boolean => /^(https?|ssh|git):\/\/|^git@|\/[^/]+\.git\/?$/.test(s);
+
+/** Players paste the clone URL from the chat on its own. */
+function urlTip(ctx: Ctx, url: string): void {
+  const L = ctx.world.local;
+  if (L) ctx.out.tip('هذا رابط المشروع، ونسخته عندك من قبل في `~/' + L.dir + '`.');
+  else ctx.out.tip('هذا رابط المشروع، والرابط لحاله مو أمر. استنسخه كذا: `git clone ' + url + '`');
+}
+
+/** Running a path, as bash 5 reports it. Nothing in this world is executable. */
+function runPath(ctx: Ctx, path: string): boolean {
+  const { world, out } = ctx;
+  const found = resolvePath(world, path);
+  if (!found) {
+    out.print('bash: ' + path + ': No such file or directory', 'r');
+    if (isRepoUrl(path)) urlTip(ctx, path);
+    else out.tip('اكتب `help` تشوف الأوامر المتاحة.');
+  } else if (found.dir !== undefined) {
+    out.print('bash: ' + path + ': Is a directory', 'r');
+    const target = found.dir ? '~/' + found.dir : '~';
+    // `cd` only knows home and the clone.
+    if (!found.dir.includes('/') && target !== world.cwd) out.tip('هذا مجلد، والمجلد ما ينشغّل. تدخله بـ `cd ' + target + '`');
+  } else if (path.endsWith('/')) {
+    out.print('bash: ' + path + ': Not a directory', 'r');
+  } else {
+    out.print('bash: ' + path + ': Permission denied', 'r');
+    out.tip(
+      '`' + found.file + '` ملف، والملفات ما تنشغّل مثل الأوامر. تشوف محتواه بـ ' +
+        (inRepo(world) ? '`cat ' + found.file + '`' : '`cd ' + world.local!.dir + '` ثم `cat ' + found.file + '`'),
+    );
+  }
+  return false;
+}
+
+/**
+ * What a path names in this small world: the home folder (dir ''), the clone, its .git, or a file in the clone.
+ * Paths above home count as home.
+ */
+function resolvePath(world: World, path: string): { dir: string; file?: undefined } | { dir?: undefined; file: string } | null {
+  let parts: string[];
+  if (path.startsWith('/')) {
+    const abs = path.split('/').filter(Boolean);
+    if (abs.length < 2 && (abs[0] ?? 'home') === 'home') return { dir: '' };
+    if (abs[0] !== 'home' || abs[1] !== 'dev') return null;
+    parts = abs.slice(2);
+  } else {
+    parts = [...(world.cwd === '~' ? [] : [world.cwd.slice(2)]), ...path.split('/')];
+  }
+  const segs: string[] = [];
+  for (const p of parts) {
+    if (p === '..') segs.pop();
+    else if (p && p !== '.') segs.push(p);
+  }
+  const L = world.local;
+  if (!segs.length) return { dir: '' };
+  if (!L || segs[0] !== L.dir || segs.length > 2) return null;
+  if (segs.length === 1) return { dir: L.dir };
+  if (segs[1] === '.git') return { dir: L.dir + '/.git' };
+  return segs[1]! in L.work ? { file: segs[1]! } : null;
 }
 
 function needRepoFile(ctx: Ctx, name: string, cmd: string): boolean {

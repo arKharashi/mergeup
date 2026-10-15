@@ -17,6 +17,38 @@ describe('shell', () => {
     expect(text).toContain('`git status`');
   });
 
+  it('runs a pasted clone URL as a path, like bash, and suggests git clone', () => {
+    const { world, run } = makeWorld();
+    const text = run(REPO_URL + ' && echo after');
+    expect(text).toContain('bash: ' + REPO_URL + ': No such file or directory');
+    expect(text).toContain('`git clone ' + REPO_URL + '`');
+    expect(text).not.toContain('after');
+    expect(world.local).toBeNull();
+    run('git clone ' + REPO_URL);
+    expect(run(REPO_URL)).toContain('`~/bun-cafe`');
+  });
+
+  it('suggests git clone for an scp-style URL, which has no slash', () => {
+    const { run } = makeWorld();
+    const text = run('git@repo.bun.local:bun-cafe.git');
+    expect(text).toContain('bash: git@repo.bun.local:bun-cafe.git: command not found');
+    expect(text).toContain('`git clone git@repo.bun.local:bun-cafe.git`');
+    expect(run('bun-cafe.git')).toContain('`help`');
+  });
+
+  it('reports running a folder or a file the way bash 5 does', () => {
+    const { run } = makeWorld({ cloned: true });
+    expect(run('./README.md')).toBe('bash: ./README.md: Permission denied\n» `README.md` ملف، والملفات ما تنشغّل مثل الأوامر. تشوف محتواه بـ `cat README.md`');
+    expect(run('README.md/')).toBe('bash: README.md/: Not a directory');
+    expect(run('../bun-cafe')).toBe('bash: ../bun-cafe: Is a directory');
+    expect(run('./nope')).toContain('bash: ./nope: No such file or directory');
+    run('cd ..');
+    expect(run('bun-cafe/')).toBe('bash: bun-cafe/: Is a directory\n» هذا مجلد، والمجلد ما ينشغّل. تدخله بـ `cd ~/bun-cafe`');
+    expect(run('~/bun-cafe/.git')).toBe('bash: /home/dev/bun-cafe/.git: Is a directory');
+    expect(run('~')).toBe('bash: /home/dev: Is a directory');
+    expect(run('bun-cafe/README.md')).toContain('`cd bun-cafe` ثم `cat README.md`');
+  });
+
   it('cd moves in and out of the clone', () => {
     const { world, run } = makeWorld();
     expect(run('cd bun-cafe')).toContain('No such file or directory');
