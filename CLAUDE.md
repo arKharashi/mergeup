@@ -152,7 +152,8 @@ The in-level repo is not saved: reloading the page restarts the current level.
       settings, `CODEOWNERS`, `tag`.
 - [ ] Export/import progress as a JSON file.
 - [ ] Save the in-level state so a reload doesn't restart the level.
-- [ ] CONTRIBUTING.md for community levels, and a license (MIT suggested).
+- [x] MIT license.
+- [ ] CONTRIBUTING.md for community levels.
 
 ## Gotchas
 

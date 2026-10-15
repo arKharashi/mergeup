@@ -2,6 +2,7 @@
   "name": "git-together",
   "private": true,
   "version": "0.1.0",
+  "license": "MIT",
   "type": "module",
   "description": "لعبة متصفح مجانية تعلّم git والعمل في فريق، مع مدير وزملاء افتراضيين.",
   "engines": {
