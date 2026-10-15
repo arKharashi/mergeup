@@ -118,7 +118,7 @@ Use `/new-level <n>` (see `.claude/commands/new-level.md`) or follow this checkl
 - Colours are tokens in `src/styles.css`: light on `:root`, dark under `prefers-color-scheme` and `[data-theme="dark"]`.
   Never hard-code a colour in a component.
 - Fonts: the system font, so SF Pro and SF Arabic on Apple devices (IBM Plex Sans Arabic elsewhere); SF Mono or Menlo
-  for the terminal and code.
+  for the terminal and code. Typing fields are 16px on touch screens, because iOS zooms into smaller ones.
 - Layout: desktop three columns (task + chat, terminal, files); tablet two with tabs; phone one pane with tabs.
   Check 390px wide: no horizontal page scroll.
 - The chat paces NPC messages ("typing…"): `useChatPace` reveals `session.chat` one message at a time.

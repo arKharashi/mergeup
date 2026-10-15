@@ -652,6 +652,10 @@ code, .mono { font-family: var(--f-mono); }
   .cell { width: 14px; height: 14px; }
   .track-cells { gap: 5px; }
 }
+/* iOS zooms the page into any text field under 16px; keep typing fields at 16px on touch screens. */
+@media (pointer: coarse) {
+  .inputline input, .card input, .edfoot input, .editor textarea { font-size: 16px; }
+}
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
