@@ -4,7 +4,9 @@ import type { KeyValueStore } from '../game/progress';
 
 export type Lang = keyof Bilingual;
 
-const KEY = 'zumala-git:lang';
+const KEY = 'git-together:lang';
+/** The key from when the game was called Zumala Git. */
+const OLD_KEY = 'zumala-git:lang';
 
 interface LangValue {
   lang: Lang;
@@ -22,12 +24,11 @@ export const dirOf = (lang: Lang): 'rtl' | 'ltr' => (lang === 'ar' ? 'rtl' : 'lt
  * kept apart from game progress. Sets the page's lang and dir, so the CSS mirrors the layout.
  */
 export function LangProvider({ store, children }: { store: KeyValueStore; children: ReactNode }) {
-  const [lang, setLangState] = useState<Lang>(() => (store.get(KEY) === 'en' ? 'en' : 'ar'));
+  const [lang, setLangState] = useState<Lang>(() => ((store.get(KEY) ?? store.get(OLD_KEY)) === 'en' ? 'en' : 'ar'));
 
   useLayoutEffect(() => {
     document.documentElement.lang = lang;
     document.documentElement.dir = dirOf(lang);
-    document.title = lang === 'ar' ? 'زملاء Git' : 'Zumala Git';
   }, [lang]);
 
   const value: LangValue = {

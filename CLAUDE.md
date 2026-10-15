@@ -1,4 +1,4 @@
-# Zumala Git (زملاء Git)
+# Git Together
 
 A free browser game that teaches git and teamwork to developers who have only worked alone.
 The player is a new hire on the team behind "بُن", a Saudi specialty coffee shop website.
@@ -134,9 +134,10 @@ Use `/new-level <n>` (see `.claude/commands/new-level.md`) or follow this checkl
 
 ## Storage
 
-`localStorage` key `zumala-git:progress:v1`, shape `Progress` in `src/game/progress.ts`. Reading and writing
+`localStorage` key `git-together:progress:v1`, shape `Progress` in `src/game/progress.ts`. Reading and writing
 must never throw (private windows). If the shape changes, bump the key version and migrate.
-The language is a browser preference under its own key, `zumala-git:lang` (`'ar'` or `'en'`), not part of `Progress`.
+The language is a browser preference under its own key, `git-together:lang` (`'ar'` or `'en'`), not part of `Progress`.
+The game was called Zumala Git: both keys still read the old `zumala-git:` key when the new one is missing.
 The in-level repo is not saved: reloading the page restarts the current level.
 
 ## Roadmap

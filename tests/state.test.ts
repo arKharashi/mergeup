@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { STORAGE_KEY, loadProgress, memoryStore, saveProgress } from '../src/game/progress';
 import { REPO_URL } from '../src/levels/fixtures';
 import { TerminalBuffer } from '../src/ui/terminalBuffer';
 import { makeGame } from './helpers';
@@ -65,5 +66,18 @@ describe('TerminalBuffer', () => {
     off();
     out.print('b');
     expect(calls).toBe(1);
+  });
+});
+
+describe('progress saved before the rename', () => {
+  it('loads from the Zumala Git key and saves under the new one', () => {
+    const store = memoryStore();
+    store.set('zumala-git:progress:v1', JSON.stringify({ v: 1, name: 'Reem', rep: 61, stars: { 1: 3 }, unlocked: 2, level: 2 }));
+    const p = loadProgress(store);
+    expect(p).toMatchObject({ name: 'Reem', rep: 61, unlocked: 2, level: 2 });
+    p.rep = 64;
+    saveProgress(store, p);
+    expect(JSON.parse(store.get(STORAGE_KEY)!).rep).toBe(64);
+    expect(loadProgress(store).rep).toBe(64);
   });
 });

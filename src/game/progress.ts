@@ -17,7 +17,9 @@ export interface KeyValueStore {
   set(key: string, value: string): void;
 }
 
-export const STORAGE_KEY = 'zumala-git:progress:v1';
+export const STORAGE_KEY = 'git-together:progress:v1';
+/** The game was called Zumala Git; progress saved under that name still loads, and moves on the next save. */
+const OLD_STORAGE_KEY = 'zumala-git:progress:v1';
 
 export const freshProgress = (): Progress => ({ v: 1, name: '', rep: 50, stars: {}, unlocked: 1, level: 1 });
 
@@ -64,7 +66,8 @@ export function parseProgress(raw: string | null): Progress | null {
   }
 }
 
-export const loadProgress = (store: KeyValueStore): Progress => parseProgress(store.get(STORAGE_KEY)) ?? freshProgress();
+export const loadProgress = (store: KeyValueStore): Progress =>
+  parseProgress(store.get(STORAGE_KEY) ?? store.get(OLD_STORAGE_KEY)) ?? freshProgress();
 
 export const saveProgress = (store: KeyValueStore, p: Progress): void => store.set(STORAGE_KEY, JSON.stringify(p));
 
