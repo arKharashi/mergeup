@@ -1,78 +1,80 @@
 # Git Together
 
-لعبة متصفح مجانية تتعلم فيها git وطريقة شغل الفرق، وأنت داخل فريق افتراضي: مدير وزملاء يتحكم فيهم الكمبيوتر، ومشروع حقيقي تشتغلون عليه سوا.
+**Learn git the way teams use it: by joining one.**
+A free browser game, in Arabic and English.
 
-مصممة للمبرمج اللي يشتغل لحاله: يعرف `add` و`commit` و`push`، بس ما جرب conflict مع زميل، ولا code review، ولا hotfix وهو في نص شغل.
+### [▶ Play it in your browser](https://arkharashi.github.io/git-together/) · [اقرأ بالعربي](README.ar.md)
 
-_A free browser game that teaches git and teamwork, in Arabic or English. [Read in English](#english)_
+[![Build and deploy](https://github.com/arKharashi/git-together/actions/workflows/deploy.yml/badge.svg)](https://github.com/arKharashi/git-together/actions/workflows/deploy.yml)
+[![MIT license](https://img.shields.io/badge/license-MIT-2ea043)](LICENSE)
+![React 19](https://img.shields.io/badge/React-19-149eca?logo=react&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6?logo=typescript&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-8-646cff?logo=vite&logoColor=white)
 
-## وش فيها
+![Git Together on a desktop: the task and team chat on the left, the terminal in the middle, the project's files on the right](docs/screenshots/desktop-en.png)
 
-- **تيرمينال يشتغل مثل git الحقيقي:** نفس الأوامر ونفس الرسائل، مع تلميحات لما تغلط.
-- **بالعربي أو بالإنجليزي:** تختار لغة الواجهة، والفريق يكلمك بها.
-- **فريق افتراضي:** أبو فهد المدير، خالد المراجع الصارم، سارة اللي تدمج قبلك، وغيرهم. يتفاعلون مع اللي تسويه.
-- **رتب وظيفية بدل أرقام:** متدرب ← Junior ← Senior ← مدير فريق، في 16 مستوى.
-- **سمعة ونجوم:** الغلط ما يوقف اللعبة، بس الفريق يتذكره.
-- **بدون حساب وبدون سيرفر:** كل شي في متصفحك، والتقدم محفوظ عندك.
+You're the new hire on the team that builds the website of Bun, a Saudi specialty coffee shop. Your team lead and teammates are scripted characters: they hand you tasks, quiz you in the team chat and react to what you do. The terminal behaves like real git, and a mistake costs reputation instead of ending the game.
 
-الجاهز الحين: رتبة المتدرب كاملة (3 مستويات). خريطة كل المستويات في [docs/design.md](docs/design.md).
+It's made for developers who know `add`, `commit` and `push` but have only ever worked alone.
 
-## شغّلها عندك
+## Features
 
-تحتاج Node.js 22.12 أو أحدث.
+- **Real git, in the browser.** `clone`, `status`, `add`, `restore`, `reset`, `rm`, `commit` (with `--amend`), `log`, `show`, `diff`, `fetch`, `pull` and `push` print the same messages as git itself. The shell has `cd`, `ls`, `cat`, `echo` with `>` and `>>`, `&&` chains, quotes, history and Tab completion.
+- **A team that reacts.** A vague commit message, a pushed password or two tasks in one commit all have consequences: reputation, stars and a word from the team lead.
+- **Teaching, not just checking.** Coaching tips explain each mistake, every level has three tiers of hints, and you can rewind a level at any time.
+- **Arabic and English.** Every line of copy exists in both languages, and the layout mirrors between right-to-left and left-to-right.
+- **Any screen.** Three panes on desktop, two on tablets, and one at a time on phones, in portrait and landscape.
+- **No account, no server.** It's a static site, and your progress stays in your browser.
 
-```bash
-npm install
-npm run dev
-```
+Playable now: the Intern rank, 3 levels. The full design, 16 levels over 4 ranks up to Team Lead, is in [docs/design.md](docs/design.md) (in Arabic).
 
-وافتح http://localhost:5173
+<p align="center">
+  <img src="docs/screenshots/phone-ar.png" width="260" alt="On a phone in Arabic: the team lead's questions in the team chat">
+  &nbsp;&nbsp;
+  <img src="docs/screenshots/phone-en.png" width="260" alt="On a phone in English: one task per commit in the terminal">
+</p>
 
-```bash
-npm run check   # فحص الأنواع والاختبارات
-npm run build   # نسخة للنشر في dist/
-```
+## How it's built
 
-## ساهم بمستوى
+| Part | What it does |
+| --- | --- |
+| **Engine** · `src/engine` | A git and shell simulator in plain TypeScript, with no DOM and no game rules. Commits form a graph with branches and a remote, a line diff (LCS) produces unified hunks, and a push is rejected when it isn't a fast-forward or targets a protected branch. It's deterministic, so tests can compare its output with real git's. |
+| **Game** · `src/game`, `src/levels` | Each level is one TypeScript file: the starting repo, the team's chat script, objectives checked against the repo's state, three tiers of hints, hooks for consequences, and a scripted solution. |
+| **UI** · `src/ui` | React 19 and Vite. The `Game` object is the single source of truth, read with `useSyncExternalStore`. The terminal renders a buffer that implements the engine's output interface. |
+| **Two languages** | Player-facing text is typed as `{ ar, en }` from the engine to the UI, and CSS logical properties let the English layout mirror the Arabic one. |
 
-كل مستوى ملف واحد في `src/levels/`، وله حل مكتوب تختبره الاختبارات تلقائياً. التفاصيل في [CLAUDE.md](CLAUDE.md)، والسيناريوهات في [docs/design.md](docs/design.md).
+## Tests
 
-## النشر
+- **67 unit tests** (Vitest). Git output is checked against what real git prints, every level's scripted solution must earn 3 stars, and everything the player reads must exist in both languages.
+- **End-to-end tests** (Playwright) play the whole game like a player: every level and its traps, in both languages, on desktop and phones, in Chromium, WebKit and Firefox, and at 25 screen sizes.
+- **CI** type-checks, tests and builds every push, and `main` deploys to GitHub Pages.
 
-عند كل push على `main`، الـ workflow في `.github/workflows/deploy.yml` يبني اللعبة وينشرها على GitHub Pages. فعّلها مرة وحدة من إعدادات الـ repo: **Settings ← Pages ← Source: GitHub Actions**.
-
----
-
-## English
-
-A free browser game that teaches git and teamwork. You join a virtual team: a manager and teammates played by the computer, and a real project you all work on.
-
-It's made for developers who have only worked alone: you know `add`, `commit` and `push`, but you've never had a conflict with a teammate, a code review, or a hotfix in the middle of your own work.
-
-- **A terminal that behaves like real git:** the same commands and the same messages, with coaching when you slip.
-- **Arabic or English:** you pick the interface language, and the team talks to you in it.
-- **A virtual team:** Abu Fahd the manager, Khalid the strict reviewer, Sara who merges before you, and more. They react to what you do.
-- **Job ranks instead of numbers:** Intern → Junior → Senior → Team Lead, over 16 levels.
-- **Reputation and stars:** a mistake doesn't end the game, but the team remembers it.
-- **No account, no server:** everything runs in your browser, and your progress stays there.
-
-Ready now: the whole Intern rank (3 levels). The map of all levels is in [docs/design.md](docs/design.md) (in Arabic).
-
-### Run it locally
+## Run it locally
 
 You need Node.js 22.12 or newer.
 
 ```bash
 npm install
-npm run dev     # then open http://localhost:5173
-npm run check   # types and tests
-npm run build   # a deployable copy in dist/
+npm run dev      # http://localhost:5173
+npm run check    # type check and unit tests
+npm run e2e      # browser tests (the first time: npx playwright-core install chromium)
+npm run build    # the static site, in dist/
 ```
 
-### Add a level
+## Project structure
 
-Each level is one file in `src/levels/`, with a scripted solution that the tests play automatically. The details are in [CLAUDE.md](CLAUDE.md), and the scenarios in [docs/design.md](docs/design.md).
+```
+src/engine   git and shell simulator
+src/game     game state, level types, ranks and the team
+src/levels   one file per level, plus the coffee shop project's history
+src/ui       React components
+tests/       unit tests
+e2e/         end-to-end tests
+docs/        game design (Arabic) and screenshots
+```
 
-### Deploy
+Each level is one file with a scripted solution that the tests play. [CLAUDE.md](CLAUDE.md) has the checklist for writing one.
 
-Every push to `main` runs `.github/workflows/deploy.yml`, which builds the game and publishes it to GitHub Pages. Turn it on once in the repo: **Settings → Pages → Source: GitHub Actions**.
+## License
+
+[MIT](LICENSE) © Abdulrahman Alkharashi
