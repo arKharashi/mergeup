@@ -20,11 +20,11 @@ const LangContext = createContext<LangValue | null>(null);
 export const dirOf = (lang: Lang): 'rtl' | 'ltr' => (lang === 'ar' ? 'rtl' : 'ltr');
 
 /**
- * The interface language: Arabic unless the player picked English. It's a preference of this browser,
+ * The interface language: English unless the player picked Arabic. It's a preference of this browser,
  * kept apart from game progress. Sets the page's lang and dir, so the CSS mirrors the layout.
  */
 export function LangProvider({ store, children }: { store: KeyValueStore; children: ReactNode }) {
-  const [lang, setLangState] = useState<Lang>(() => ((store.get(KEY) ?? store.get(OLD_KEY)) === 'en' ? 'en' : 'ar'));
+  const [lang, setLangState] = useState<Lang>(() => ((store.get(KEY) ?? store.get(OLD_KEY)) === 'ar' ? 'ar' : 'en'));
 
   useLayoutEffect(() => {
     document.documentElement.lang = lang;

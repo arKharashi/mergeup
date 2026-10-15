@@ -51,7 +51,7 @@ export async function cases(browser, lang, engine) {
   {
     const { page, errors, ctx } = await open(browser, { blocked: true });
     await page.waitForSelector('#pname', { state: 'visible' });
-    if (lang === 'en') await page.click('#overlay .langbtn');
+    if (lang === 'ar') await page.click('#overlay .langbtn');
     r.check((await page.getAttribute('html', 'lang')) === lang, 'blocked storage: language still switches');
     await page.fill('#pname', 'Reem');
     await page.click('#nameForm button[type=submit]');

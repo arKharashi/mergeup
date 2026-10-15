@@ -21,7 +21,7 @@ export async function phone(browser, lang, engine, viewport = { width: 390, heig
   };
 
   await page.waitForSelector('#pname', { state: 'visible' });
-  if (lang === 'en') await tap('#overlay .langbtn');
+  if (lang === 'ar') await tap('#overlay .langbtn');
   await fits('welcome');
   await inView('#nameForm button[type=submit]', 'welcome');
   await page.fill('#pname', L('ريم', 'Reem'));

@@ -7,7 +7,7 @@ A manager and teammates are computer-controlled characters (NPCs) driven by scri
 
 - **Design spec (the source of truth for levels):** `docs/design.md` (Arabic). Read the level's scenario before building it.
 - **Audience:** Arabic-speaking developers. Every string the player reads comes in Saudi Arabic and English, and the
-  player picks the language (Arabic by default). git output stays in English, like real git.
+  player picks the language (English by default). git output stays in English, like real git.
 - **Constraints:** free to run, static site (GitHub Pages), everything in the browser, progress in `localStorage`.
 
 ## Commands

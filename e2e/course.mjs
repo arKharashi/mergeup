@@ -9,9 +9,9 @@ export async function course(browser, lang, engine) {
 
   /* ---------- onboarding ---------- */
   await page.waitForSelector('#pname', { state: 'visible' });
-  r.check((await page.getAttribute('html', 'dir')) === 'rtl', 'default language is Arabic');
+  r.check((await page.getAttribute('html', 'dir')) === 'ltr' && (await page.getAttribute('html', 'lang')) === 'en', 'default language is English');
   r.check((await active(page)) === 'pname', 'name field focused', await active(page));
-  if (lang === 'en') await page.click('#overlay .langbtn');
+  if (lang === 'ar') await page.click('#overlay .langbtn');
   r.check((await page.getAttribute('html', 'lang')) === lang, 'html lang is ' + lang);
   r.check((await page.getAttribute('html', 'dir')) === L('rtl', 'ltr'), 'html dir follows the language');
   r.check((await page.title()) === 'Git Together', 'page title');
