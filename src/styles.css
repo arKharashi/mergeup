@@ -181,7 +181,7 @@ code, .mono { font-family: var(--f-mono); }
   gap: 10px 20px;
   min-width: 0;
 }
-.brand { display: flex; align-items: baseline; gap: 10px; }
+.brand { display: flex; align-items: center; gap: 10px; }
 .brand h1 {
   margin: 0;
   font-family: var(--f-display);
@@ -189,7 +189,11 @@ code, .mono { font-family: var(--f-mono); }
   font-size: 1.5rem;
   line-height: 1.1;
   letter-spacing: -0.02em;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
+.brand h1 .logo { flex: none; }
 .brand h1 b { color: var(--accent); font-weight: 700; }
 .brand small { color: var(--muted); font-size: 0.82rem; }
 .rank {
@@ -551,6 +555,7 @@ code, .mono { font-family: var(--f-mono); }
 .facts b { font-weight: 600; font-variant-numeric: tabular-nums; }
 .quote { border-inline-start: 3px solid var(--accent); padding-block: 4px; padding-inline: 12px 0; color: var(--ink); font-size: 0.95rem; }
 .card-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.card > .logo { flex: none; margin-bottom: -2px; }
 .langbtn { white-space: nowrap; }
 
 /* Toasts: notification banners at the top, on the side where the line ends. */
@@ -612,6 +617,8 @@ code, .mono { font-family: var(--f-mono); }
   .brand h1 { font-size: 1.25rem; }
   /* The task card's eyebrow still shows the rank; a third header row would squeeze the terminal. */
   .rank { display: none; }
+  /* The welcome card needs its height for the name field and the button. */
+  .card > .logo { display: none; }
   .tabs button { padding-block: 4px; }
   .col-head { min-height: 34px; padding-block: 5px; }
   .col-term .col-head { min-height: 32px; padding-block: 4px; }

@@ -5,6 +5,7 @@ import { totalStars } from '../game/progress';
 import type { Rank } from '../game/ranks';
 import { useGame } from './gameContext';
 import { LangToggle, useLang } from './lang';
+import { Logo } from './Logo';
 import { Md } from './Md';
 
 export type Modal =
@@ -114,6 +115,7 @@ function Welcome({ onStart }: { onStart: (name: string) => void }) {
   const [name, setName] = useState('');
   return (
     <>
+      <Logo size={48} />
       <div className="card-top">
         <div className="eyebrow">{t({ ar: 'فريق بُن · المكتب الافتراضي', en: 'Bun team · Virtual office' })}</div>
         <LangToggle />

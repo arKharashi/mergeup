@@ -2,6 +2,7 @@ import { totalStars } from '../game/progress';
 import { PLANNED_LEVELS, RANKS } from '../game/ranks';
 import { useGame } from './gameContext';
 import { LangToggle, useLang } from './lang';
+import { Logo } from './Logo';
 
 /** Brand, rank chip, the 16-level track, reputation meter, star count and the language switch. */
 export function Header({ onPickLevel }: { onPickLevel: (n: number) => void }) {
@@ -45,7 +46,10 @@ export function Header({ onPickLevel }: { onPickLevel: (n: number) => void }) {
     <header className="top">
       <div className="brand">
         <h1 dir="ltr">
-          Merge<b>Up</b>
+          <Logo size={28} />
+          <span>
+            Merge<b>Up</b>
+          </span>
         </h1>
         <small>{t({ ar: 'مكتبك الافتراضي في فريق بُن', en: 'Your virtual desk on the Bun team' })}</small>
       </div>
