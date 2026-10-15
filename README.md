@@ -23,7 +23,7 @@ It's made for developers who know `add`, `commit` and `push` but have only ever 
 - **A team that reacts.** A vague commit message, a pushed password or two tasks in one commit all have consequences: reputation, stars and a word from the team lead.
 - **Teaching, not just checking.** Coaching tips explain each mistake, every level has three tiers of hints, and you can rewind a level at any time.
 - **Arabic and English.** Every line of copy exists in both languages, and the layout mirrors between right-to-left and left-to-right.
-- **Designed like an Apple app.** Apple's system fonts and colours, iMessage-style chat, and a terminal that looks like macOS Terminal, in light and dark mode.
+- **Designed with care.** An Apple-style layout with iMessage-style chat and a macOS Terminal window, in GitHub's colors, in light and dark mode.
 - **Any screen.** Three panes on desktop, two on tablets, and one at a time on phones, in portrait and landscape.
 - **No account, no server.** It's a static site, and your progress stays in your browser.
 

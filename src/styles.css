@@ -1,152 +1,137 @@
-/* Apple-style office, after the Human Interface Guidelines. Three panes on a grouped background: the task and
-   the team chat (iMessage bubbles), the terminal (a macOS Terminal window) and the project files (a Finder list).
-   On phones the panes become a segmented control. Colours are Apple's system colours, light and dark; the terminal
-   follows Terminal.app's Basic profile, white in light mode and dark in dark mode. */
+/* The office, laid out after Apple's Human Interface Guidelines and coloured after GitHub. Three panes on a gray
+   background: the task and the team chat (iMessage-style bubbles), the terminal (a macOS Terminal window, dark like
+   GitHub's) and the project files (a Finder-style list). On phones the panes become a segmented control.
+   GitHub uses two greens, and so does this: --accent is readable as text, --accent-fill carries white text. */
 :root {
   color-scheme: light;
   /* Surfaces and text */
-  --bg: #F2F2F7;
+  --bg: #F6F8FA;
   --surface: #FFFFFF;
-  --surface-2: #F2F2F7;
-  --fill: rgba(118, 118, 128, 0.12);
-  --fill-2: rgba(118, 118, 128, 0.2);
-  --line: #E5E5EA;
-  --line-strong: #D1D1D6;
-  --ink: #1D1D1F;
-  --muted: #6E6E73;
+  --surface-2: #F6F8FA;
+  --fill: rgba(31, 35, 40, 0.06);
+  --fill-2: rgba(31, 35, 40, 0.12);
+  --line: #D8DEE4;
+  --line-strong: #D0D7DE;
+  --ink: #1F2328;
+  --muted: #59636E;
   /* Tint and status */
-  --accent: #007AFF;
+  --accent: #1A7F37;
+  --accent-fill: #1F883D;
   --accent-ink: #FFFFFF;
-  --accent-soft: rgba(0, 122, 255, 0.12);
-  --focus: rgba(0, 122, 255, 0.5);
-  --good: #34C759;
-  --good-ink: #248A3D;
-  --good-soft: rgba(52, 199, 89, 0.14);
-  --bad: #FF3B30;
-  --bad-ink: #D70015;
-  --bad-soft: rgba(255, 59, 48, 0.12);
-  --warn: #FF9500;
-  --warn-ink: #C93400;
-  --warn-soft: rgba(255, 149, 0, 0.15);
-  /* iMessage, the segmented control, translucent materials */
-  --bubble-in: #E9E9EB;
+  --accent-soft: rgba(31, 136, 61, 0.12);
+  --focus: rgba(9, 105, 218, 0.4);
+  --good: #1F883D;
+  --good-ink: #1A7F37;
+  --good-soft: rgba(31, 136, 61, 0.12);
+  --bad: #CF222E;
+  --bad-ink: #D1242F;
+  --bad-soft: rgba(207, 34, 46, 0.1);
+  --warn: #BF8700;
+  --warn-ink: #9A6700;
+  --warn-soft: rgba(191, 135, 0, 0.14);
+  /* Chat bubbles, the segmented control, translucent banners */
+  --bubble-in: #EFF2F5;
   --seg-thumb: #FFFFFF;
-  --material: rgba(250, 250, 252, 0.82);
-  --doc-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 13 16'%3E%3Cpath d='M2 .5h6.2l4.3 4.3V14a1.5 1.5 0 0 1-1.5 1.5H2A1.5 1.5 0 0 1 .5 14V2A1.5 1.5 0 0 1 2 .5Z' fill='%23fff' stroke='%23AEAEB2'/%3E%3Cpath d='M8.2.6V4a1 1 0 0 0 1 1h3.2' fill='none' stroke='%23AEAEB2'/%3E%3C/svg%3E");
-  /* Terminal.app, Basic profile */
-  --term-bg: #FFFFFF;
-  --term-bar: #ECECEC;
-  --term-title: #4D4D4D;
-  --term-line: #D4D4D4;
-  --term-ink: #1D1D1F;
-  --term-dim: #8E8E93;
-  --t-green: #1B8A2D;
-  --t-red: #C9302C;
-  --t-yellow: #946600;
-  --t-cyan: #0E7C86;
-  --t-blue: #2E55D6;
-  --t-tip: #A35200;
-  --t-tip-line: #FF9500;
-  --t-code: #6B3500;
+  --material: rgba(255, 255, 255, 0.86);
+  --doc-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 13 16'%3E%3Cpath d='M2 .5h6.2l4.3 4.3V14a1.5 1.5 0 0 1-1.5 1.5H2A1.5 1.5 0 0 1 .5 14V2A1.5 1.5 0 0 1 2 .5Z' fill='%23fff' stroke='%238C959F'/%3E%3Cpath d='M8.2.6V4a1 1 0 0 0 1 1h3.2' fill='none' stroke='%238C959F'/%3E%3C/svg%3E");
+  /* The terminal: a macOS window, dark like GitHub's */
+  --term-bg: #0D1117;
+  --term-bar: #161B22;
+  --term-title: #8B949E;
+  --term-line: #010409;
+  --term-ink: #E6EDF3;
+  --term-dim: #7D8590;
+  --t-green: #3FB950;
+  --t-red: #FF7B72;
+  --t-yellow: #D29922;
+  --t-cyan: #39C5CF;
+  --t-blue: #58A6FF;
+  --t-tip: #E3B341;
+  --t-tip-line: #BB8009;
+  --t-code: #F2CC60;
   /* Depth */
-  --shadow: 0 12px 40px rgba(0, 0, 0, 0.16);
-  --panel-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 2px 12px rgba(0, 0, 0, 0.04);
-  --window-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.18), 0 8px 28px rgba(0, 0, 0, 0.14);
-  /* SF Pro and SF Arabic on Apple devices; IBM Plex Sans Arabic elsewhere. */
-  --f-body: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Arabic', 'IBM Plex Sans Arabic', 'Segoe UI', Roboto, system-ui, sans-serif;
-  --f-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Arabic', 'IBM Plex Sans Arabic', 'Segoe UI', Roboto, system-ui, sans-serif;
-  /* Monospace fonts have no Arabic; without these, Arabic in the editor falls back to a spaced-out monospace face. */
-  --f-mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Monaco, Consolas, 'SF Arabic', 'Geeza Pro', 'IBM Plex Sans Arabic', monospace;
+  --shadow: 0 12px 40px rgba(31, 35, 40, 0.18);
+  --panel-shadow: 0 1px 0 rgba(31, 35, 40, 0.04);
+  --window-shadow: 0 0 0 1px rgba(1, 4, 9, 0.85), 0 8px 24px rgba(66, 74, 83, 0.2);
+  /* IBM Plex Sans Arabic for Arabic and English everywhere; SF Mono or Menlo for code. */
+  --f-body: 'IBM Plex Sans Arabic', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --f-display: 'IBM Plex Sans Arabic', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  /* Monospace fonts have no Arabic; without the Arabic font, Arabic in the editor falls back to a spaced-out face. */
+  --f-mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Monaco, Consolas, 'IBM Plex Sans Arabic', monospace;
   --r: 12px;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #000000;
-    --surface: #1C1C1E;
-    --surface-2: #2C2C2E;
-    --fill: rgba(118, 118, 128, 0.24);
-    --fill-2: rgba(118, 118, 128, 0.36);
-    --line: #38383A;
-    --line-strong: #48484A;
-    --ink: #F5F5F7;
-    --muted: #98989D;
-    --accent: #0A84FF;
-    --accent-soft: rgba(10, 132, 255, 0.22);
-    --focus: rgba(10, 132, 255, 0.6);
-    --good: #30D158;
-    --good-ink: #30D158;
-    --good-soft: rgba(48, 209, 88, 0.18);
-    --bad: #FF453A;
-    --bad-ink: #FF6961;
-    --bad-soft: rgba(255, 69, 58, 0.18);
-    --warn: #FF9F0A;
-    --warn-ink: #FFB340;
-    --warn-soft: rgba(255, 159, 10, 0.18);
-    --bubble-in: #2C2C2E;
-    --seg-thumb: #636366;
-    --material: rgba(44, 44, 46, 0.82);
-    --doc-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 13 16'%3E%3Cpath d='M2 .5h6.2l4.3 4.3V14a1.5 1.5 0 0 1-1.5 1.5H2A1.5 1.5 0 0 1 .5 14V2A1.5 1.5 0 0 1 2 .5Z' fill='%233A3A3C' stroke='%238E8E93'/%3E%3Cpath d='M8.2.6V4a1 1 0 0 0 1 1h3.2' fill='none' stroke='%238E8E93'/%3E%3C/svg%3E");
-    --term-bg: #1E1E1E;
-    --term-bar: #323232;
-    --term-title: #B4B4B4;
-    --term-line: #171717;
-    --term-ink: #F2F2F2;
-    --t-green: #32D74B;
-    --t-red: #FF6961;
-    --t-yellow: #FFD60A;
-    --t-cyan: #64D2FF;
-    --t-blue: #7AA7FF;
-    --t-tip: #FFB340;
-    --t-tip-line: #FF9F0A;
-    --t-code: #FFE2B0;
-    --shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+    --bg: #010409;
+    --surface: #0D1117;
+    --surface-2: #161B22;
+    --fill: rgba(110, 118, 129, 0.16);
+    --fill-2: rgba(110, 118, 129, 0.3);
+    --line: #21262D;
+    --line-strong: #30363D;
+    --ink: #E6EDF3;
+    --muted: #8D96A0;
+    --accent: #3FB950;
+    --accent-fill: #238636;
+    --accent-soft: rgba(63, 185, 80, 0.15);
+    --focus: rgba(56, 139, 253, 0.55);
+    --good: #238636;
+    --good-ink: #3FB950;
+    --good-soft: rgba(63, 185, 80, 0.15);
+    --bad: #DA3633;
+    --bad-ink: #FF7B72;
+    --bad-soft: rgba(248, 81, 73, 0.15);
+    --warn: #D29922;
+    --warn-ink: #E3B341;
+    --warn-soft: rgba(210, 153, 34, 0.15);
+    --bubble-in: #21262D;
+    --seg-thumb: #30363D;
+    --material: rgba(22, 27, 34, 0.88);
+    --doc-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 13 16'%3E%3Cpath d='M2 .5h6.2l4.3 4.3V14a1.5 1.5 0 0 1-1.5 1.5H2A1.5 1.5 0 0 1 .5 14V2A1.5 1.5 0 0 1 2 .5Z' fill='%23161B22' stroke='%238D96A0'/%3E%3Cpath d='M8.2.6V4a1 1 0 0 0 1 1h3.2' fill='none' stroke='%238D96A0'/%3E%3C/svg%3E");
+    --term-bg: #010409;
+    --term-bar: #161B22;
+    --term-title: #8D96A0;
+    --term-line: #000000;
+    --shadow: 0 12px 40px rgba(1, 4, 9, 0.8);
     --panel-shadow: none;
-    --window-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.14), 0 8px 28px rgba(0, 0, 0, 0.5);
+    --window-shadow: 0 0 0 1px #30363D, 0 8px 24px rgba(1, 4, 9, 0.6);
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #000000;
-  --surface: #1C1C1E;
-  --surface-2: #2C2C2E;
-  --fill: rgba(118, 118, 128, 0.24);
-  --fill-2: rgba(118, 118, 128, 0.36);
-  --line: #38383A;
-  --line-strong: #48484A;
-  --ink: #F5F5F7;
-  --muted: #98989D;
-  --accent: #0A84FF;
-  --accent-soft: rgba(10, 132, 255, 0.22);
-  --focus: rgba(10, 132, 255, 0.6);
-  --good: #30D158;
-  --good-ink: #30D158;
-  --good-soft: rgba(48, 209, 88, 0.18);
-  --bad: #FF453A;
-  --bad-ink: #FF6961;
-  --bad-soft: rgba(255, 69, 58, 0.18);
-  --warn: #FF9F0A;
-  --warn-ink: #FFB340;
-  --warn-soft: rgba(255, 159, 10, 0.18);
-  --bubble-in: #2C2C2E;
-  --seg-thumb: #636366;
-  --material: rgba(44, 44, 46, 0.82);
-  --doc-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 13 16'%3E%3Cpath d='M2 .5h6.2l4.3 4.3V14a1.5 1.5 0 0 1-1.5 1.5H2A1.5 1.5 0 0 1 .5 14V2A1.5 1.5 0 0 1 2 .5Z' fill='%233A3A3C' stroke='%238E8E93'/%3E%3Cpath d='M8.2.6V4a1 1 0 0 0 1 1h3.2' fill='none' stroke='%238E8E93'/%3E%3C/svg%3E");
-  --term-bg: #1E1E1E;
-  --term-bar: #323232;
-  --term-title: #B4B4B4;
-  --term-line: #171717;
-  --term-ink: #F2F2F2;
-  --t-green: #32D74B;
-  --t-red: #FF6961;
-  --t-yellow: #FFD60A;
-  --t-cyan: #64D2FF;
-  --t-blue: #7AA7FF;
-  --t-tip: #FFB340;
-  --t-tip-line: #FF9F0A;
-  --t-code: #FFE2B0;
-  --shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+  --bg: #010409;
+  --surface: #0D1117;
+  --surface-2: #161B22;
+  --fill: rgba(110, 118, 129, 0.16);
+  --fill-2: rgba(110, 118, 129, 0.3);
+  --line: #21262D;
+  --line-strong: #30363D;
+  --ink: #E6EDF3;
+  --muted: #8D96A0;
+  --accent: #3FB950;
+  --accent-fill: #238636;
+  --accent-soft: rgba(63, 185, 80, 0.15);
+  --focus: rgba(56, 139, 253, 0.55);
+  --good: #238636;
+  --good-ink: #3FB950;
+  --good-soft: rgba(63, 185, 80, 0.15);
+  --bad: #DA3633;
+  --bad-ink: #FF7B72;
+  --bad-soft: rgba(248, 81, 73, 0.15);
+  --warn: #D29922;
+  --warn-ink: #E3B341;
+  --warn-soft: rgba(210, 153, 34, 0.15);
+  --bubble-in: #21262D;
+  --seg-thumb: #30363D;
+  --material: rgba(22, 27, 34, 0.88);
+  --doc-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 13 16'%3E%3Cpath d='M2 .5h6.2l4.3 4.3V14a1.5 1.5 0 0 1-1.5 1.5H2A1.5 1.5 0 0 1 .5 14V2A1.5 1.5 0 0 1 2 .5Z' fill='%23161B22' stroke='%238D96A0'/%3E%3Cpath d='M8.2.6V4a1 1 0 0 0 1 1h3.2' fill='none' stroke='%238D96A0'/%3E%3C/svg%3E");
+  --term-bg: #010409;
+  --term-bar: #161B22;
+  --term-title: #8D96A0;
+  --term-line: #000000;
+  --shadow: 0 12px 40px rgba(1, 4, 9, 0.8);
   --panel-shadow: none;
-  --window-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.14), 0 8px 28px rgba(0, 0, 0, 0.5);
+  --window-shadow: 0 0 0 1px #30363D, 0 8px 24px rgba(1, 4, 9, 0.6);
   color-scheme: dark;
 }
 
@@ -227,7 +212,7 @@ code, .mono { font-family: var(--f-mono); }
   background: transparent;
 }
 .cell.open { background: var(--fill-2); border-color: transparent; }
-.cell.done { background: var(--accent); border-color: var(--accent); }
+.cell.done { background: var(--accent-fill); border-color: var(--accent-fill); }
 .cell.current { box-shadow: 0 0 0 2px var(--bg), 0 0 0 3.5px var(--accent); }
 .cell.soon { opacity: 0.35; cursor: default; }
 .meters { display: flex; align-items: center; gap: 14px; }
@@ -336,7 +321,7 @@ code, .mono { font-family: var(--f-mono); }
   transition: background .15s ease, filter .15s ease;
 }
 .btn:hover { background: var(--fill-2); }
-.btn.primary { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.btn.primary { background: var(--accent-fill); color: var(--accent-ink); font-weight: 600; }
 .btn.primary:hover { filter: brightness(1.08); }
 .btn.ghost { background: transparent; }
 .btn.ghost:hover { background: var(--accent-soft); }
@@ -388,7 +373,7 @@ code, .mono { font-family: var(--f-mono); }
 .msg[data-who="you"] .avatar,
 .msg[data-who="you"] .who { display: none; }
 .msg[data-who="you"] > div:last-child { justify-self: end; }
-.msg[data-who="you"] .text { background: var(--accent); color: #FFFFFF; }
+.msg[data-who="you"] .text { background: var(--accent-fill); color: var(--accent-ink); }
 .msg[data-who="you"] .text code { background: rgba(255, 255, 255, 0.22); }
 .msg.sys { display: block; text-align: center; font-size: 0.72rem; font-weight: 600; color: var(--muted); margin: 2px 0; }
 .msg.alert .text { background: var(--bad-soft); }
@@ -492,7 +477,7 @@ code, .mono { font-family: var(--f-mono); }
 .files li button > span:first-child { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
 .files li button > span:first-child::before { content: ''; flex: none; width: 13px; height: 16px; background: var(--doc-icon) center / contain no-repeat; }
 .files li button:hover { background: var(--fill); }
-.files li button[aria-current="true"] { background: var(--accent); color: #FFFFFF; }
+.files li button[aria-current="true"] { background: var(--accent-fill); color: var(--accent-ink); }
 .files li button[aria-current="true"] .badge { background: rgba(255, 255, 255, 0.24); color: #FFFFFF; }
 .badge { font-family: var(--f-mono); font-size: 0.68rem; font-weight: 700; min-width: 1.5em; text-align: center; border-radius: 5px; padding: 1px 5px; }
 .badge.staged { color: var(--good-ink); background: var(--good-soft); }

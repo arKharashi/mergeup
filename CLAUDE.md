@@ -111,14 +111,14 @@ Use `/new-level <n>` (see `.claude/commands/new-level.md`) or follow this checkl
 
 ## UI
 
-- The look follows Apple's Human Interface Guidelines: Apple's system colours on a grouped background, white rounded
-  panels, a segmented control for the tabs, iMessage bubbles in the chat, Reminders checkboxes, a Finder file list,
-  iOS sheets and banners. The terminal is a macOS Terminal window (traffic lights, a `folder — bash — cols×rows` title)
-  in the Basic profile: white in light mode, dark in dark mode.
+- The layout follows Apple's Human Interface Guidelines: rounded panels, a segmented control for the tabs, iMessage-style
+  chat bubbles, round checkboxes, a Finder-style file list, sheets and banners. The colours are GitHub's, with two greens:
+  `--accent` for text and `--accent-fill` behind white text. The terminal is a macOS Terminal window (traffic lights,
+  a `folder — bash — cols×rows` title), dark like GitHub's in both modes.
 - Colours are tokens in `src/styles.css`: light on `:root`, dark under `prefers-color-scheme` and `[data-theme="dark"]`.
   Never hard-code a colour in a component.
-- Fonts: the system font, so SF Pro and SF Arabic on Apple devices (IBM Plex Sans Arabic elsewhere); SF Mono or Menlo
-  for the terminal and code. Typing fields are 16px on touch screens, because iOS zooms into smaller ones.
+- Fonts: IBM Plex Sans Arabic for all text, Arabic and English, on every device; SF Mono or Menlo for the terminal and
+  code. Typing fields are 16px on touch screens, because iOS zooms into smaller ones.
 - Layout: desktop three columns (task + chat, terminal, files); tablet two with tabs; phone one pane with tabs.
   Check 390px wide: no horizontal page scroll.
 - The chat paces NPC messages ("typing…"): `useChatPace` reveals `session.chat` one message at a time.
