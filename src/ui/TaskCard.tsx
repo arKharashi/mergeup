@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { rankOfLevel } from '../game/ranks';
 import { useGame } from './gameContext';
 import { useLang } from './lang';
@@ -15,12 +15,33 @@ export function TaskCard({ onRewind, onNext }: { onRewind: () => void; onNext: (
   const objectives = game.objectives();
   const [doneAtStart] = useState(() => objectives.map((o) => o.done));
   const s = game.session;
-  if (!s) return <div className="task" id="task" />;
+  const card = useRef<HTMLDivElement>(null);
+
+  // On short screens the card scrolls; bring a new hint or the level's result into view.
+  const reveal = (selector: string) => {
+    const box = card.current;
+    const el = box?.querySelector(selector);
+    if (!box || !el) return;
+    const b = box.getBoundingClientRect();
+    const e = el.getBoundingClientRect();
+    if (e.bottom > b.bottom) box.scrollTop += Math.min(e.bottom - b.bottom + 8, e.top - b.top);
+    else if (e.top < b.top) box.scrollTop -= b.top - e.top + 8;
+  };
+  const hintTier = s?.hintTier ?? 0;
+  const status = s?.status;
+  useLayoutEffect(() => {
+    if (hintTier) reveal('.hint > div:last-child');
+  }, [hintTier]);
+  useLayoutEffect(() => {
+    if (status && status !== 'playing') reveal('.task-status');
+  }, [status]);
+
+  if (!s) return <div className="task" id="task" ref={card} />;
 
   const lv = s.level;
   const hints = game.hints();
   return (
-    <div className="task" id="task">
+    <div className="task" id="task" ref={card}>
       <div className="eyebrow">{'LEVEL ' + lv.id + ' · ' + rankOfLevel(lv.id).en.toUpperCase()}</div>
       <h3>{t(lv.title)}</h3>
       <p className="sub">{t(lv.summary)}</p>
