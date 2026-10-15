@@ -71,6 +71,8 @@ export class Game {
   progress: Progress;
   session: Session | null = null;
   private listeners: { [K in keyof GameEvents]?: Listener<GameEvents[K]>[] } = {};
+  private subscribers = new Set<() => void>();
+  private version = 0;
   private seq = 0;
   private sessions = 0;
   private readonly now: () => number;
@@ -94,8 +96,22 @@ export class Game {
   }
 
   private emit<K extends keyof GameEvents>(event: K, payload: GameEvents[K]): void {
+    this.version++;
     for (const fn of (this.listeners[event] ?? []) as Listener<GameEvents[K]>[]) fn(payload);
+    for (const fn of this.subscribers) fn();
   }
+
+  /**
+   * Calls `fn` after every event. With `getVersion` it fits React's useSyncExternalStore.
+   * Arrow functions so they can be passed around unbound.
+   */
+  subscribe = (fn: () => void): (() => void) => {
+    this.subscribers.add(fn);
+    return () => void this.subscribers.delete(fn);
+  };
+
+  /** Changes whenever the game emits an event, so views know to read it again. */
+  getVersion = (): number => this.version;
 
   /* ---------------- player & progress ---------------- */
 
