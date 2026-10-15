@@ -25,7 +25,7 @@
   --t-cyan: #7FC4C6;
   --t-blue: #8FB1F0;
   --shadow: 0 18px 50px rgba(15, 25, 20, 0.18);
-  --f-display: 'Reem Kufi', 'IBM Plex Sans Arabic', system-ui, sans-serif;
+  --f-display: 'IBM Plex Sans Arabic', system-ui, -apple-system, 'Segoe UI', Tahoma, sans-serif;
   --f-body: 'IBM Plex Sans Arabic', system-ui, -apple-system, 'Segoe UI', Tahoma, sans-serif;
   --f-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
   --r: 10px;
@@ -207,7 +207,7 @@ code, .mono { font-family: var(--f-mono); }
 /* The task card scrolls on its own when it grows (hints), so the chat below always keeps room. */
 .task { padding: 14px 16px 12px; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; flex: 0 1 auto; min-height: 0; overflow-y: auto; }
 .eyebrow { font-family: var(--f-mono); font-size: 0.72rem; color: var(--accent); letter-spacing: 0.05em; }
-.task h3 { margin: 0; font-family: var(--f-display); font-weight: 500; font-size: 1.3rem; line-height: 1.25; text-wrap: balance; }
+.task h3 { margin: 0; font-family: var(--f-display); font-weight: 600; font-size: 1.3rem; line-height: 1.25; text-wrap: balance; }
 .task .sub { margin: 0; color: var(--muted); font-size: 0.86rem; }
 .objs { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }
 .objs li { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 8px; align-items: start; font-size: 0.88rem; line-height: 1.5; }

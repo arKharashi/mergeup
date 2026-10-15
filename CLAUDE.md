@@ -108,7 +108,7 @@ Use `/new-level <n>` (see `.claude/commands/new-level.md`) or follow this checkl
 
 - Colours are tokens in `src/styles.css`: light on `:root`, dark under `prefers-color-scheme` and `[data-theme="dark"]`.
   Never hard-code a colour in a component.
-- Fonts: Reem Kufi (display), IBM Plex Sans Arabic (body), IBM Plex Mono (terminal and code).
+- Fonts: IBM Plex Sans Arabic for headings (600–700) and body, IBM Plex Mono for the terminal and code.
 - Layout: desktop three columns (task + chat, terminal, files); tablet two with tabs; phone one pane with tabs.
   Check 390px wide: no horizontal page scroll.
 - The chat paces NPC messages ("typing…"): `useChatPace` reveals `session.chat` one message at a time.
