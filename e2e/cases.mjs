@@ -80,14 +80,14 @@ export async function cases(browser, lang, engine) {
     const { page, errors, ctx } = await open(browser, { dark: true, seed: { [LANG_KEY]: lang, [PROGRESS_KEY]: progress({ unlocked: 3, level: 3 }) } });
     await settle(page);
     const bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
-    r.check(bg === 'rgb(14, 19, 17)', 'dark mode background', bg);
+    r.check(bg === 'rgb(0, 0, 0)', 'dark mode background', bg);
     await cmd(page, 'git add .');
     await cmd(page, 'git commit -m "Add everything"');
     await cmd(page, 'git push');
     await page.waitForSelector('#overlay .card #stay', { timeout: 10000 });
     await page.click('#stay');
     const box = await page.evaluate(() => getComputedStyle(document.querySelector('.task-status')).backgroundColor);
-    r.check(box.startsWith('rgba(239, 123, 111'), 'failed box uses the dark --bad-soft', box);
+    r.check(box.startsWith('rgba(255, 69, 58'), 'failed box uses the dark --bad-soft', box);
     allErrors.push(...errors);
     await ctx.close();
   }

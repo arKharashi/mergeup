@@ -37,6 +37,25 @@ export function Terminal({ buffer, onRewind, ref }: { buffer: TerminalBuffer; on
   useImperativeHandle(ref, () => ({ focus, scrollToEnd }), []);
   useLayoutEffect(scrollToEnd, [lines]);
 
+  // Like Terminal.app, the title shows the window's size in columns and rows.
+  const [size, setSize] = useState('80×24');
+  useLayoutEffect(() => {
+    const el = out.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const measure = () => {
+      const cs = getComputedStyle(el);
+      const px = parseFloat(cs.fontSize);
+      const width = el.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+      // Monospace letters are about 0.6em wide.
+      const cols = Math.floor(width / (px * 0.6));
+      const rows = Math.floor(el.clientHeight / (parseFloat(cs.lineHeight) || px * 1.5));
+      if (cols > 0 && rows > 0) setSize(cols + '×' + rows);
+    };
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   const echo = (raw: string) => {
     const p = game.prompt();
     buffer.line([[p.user + ':', 'p'], [p.path, 'bl'], [p.branch, 'y'], ['$ ', 'p'], [raw]]);
@@ -96,11 +115,20 @@ export function Terminal({ buffer, onRewind, ref }: { buffer: TerminalBuffer; on
   };
 
   const p = game.prompt();
+  // Terminal.app titles a window after its folder; home is the user's name.
+  const folder = p.path === '~' ? 'dev' : p.path.split('/').pop();
   return (
     <section className="col col-term" aria-label={t({ ar: 'التيرمينال', en: 'Terminal' })}>
       <div className="col-head">
-        <h2 className="mono ltr" id="termTitle" dir="ltr">
-          {'bash · ' + p.path}
+        <span className="lights" aria-hidden="true">
+          <i />
+          <i />
+          <i />
+        </span>
+        <h2 className="ltr" id="termTitle" dir="ltr">
+          {folder}
+          <span className="tproc"> — bash</span>
+          <span className="tsize">{' — ' + size}</span>
         </h2>
         <button
           type="button"
