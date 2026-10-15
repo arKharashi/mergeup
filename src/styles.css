@@ -55,7 +55,8 @@
   /* SF Pro and SF Arabic on Apple devices; IBM Plex Sans Arabic elsewhere. */
   --f-body: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Arabic', 'IBM Plex Sans Arabic', 'Segoe UI', Roboto, system-ui, sans-serif;
   --f-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Arabic', 'IBM Plex Sans Arabic', 'Segoe UI', Roboto, system-ui, sans-serif;
-  --f-mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  /* Monospace fonts have no Arabic; without these, Arabic in the editor falls back to a spaced-out monospace face. */
+  --f-mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Monaco, Consolas, 'SF Arabic', 'Geeza Pro', 'IBM Plex Sans Arabic', monospace;
   --r: 12px;
 }
 @media (prefers-color-scheme: dark) {
