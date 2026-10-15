@@ -90,7 +90,7 @@ export function FilesPanel() {
       <div className="empty">
         <strong>ما فيه ملفات للحين.</strong>
         <span>
-          المشروع عند الفريق، وأنت تحتاج نسخة منه. استخدم <code>git clone</code> في الطرفية.
+          المشروع عند الفريق، وأنت تحتاج نسخة منه. استخدم <code>git clone</code> في التيرمينال.
         </span>
       </div>
     );

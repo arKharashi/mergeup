@@ -95,7 +95,7 @@ export function Terminal({ buffer, onRewind, ref }: { buffer: TerminalBuffer; on
 
   const p = game.prompt();
   return (
-    <section className="col col-term" aria-label="الطرفية">
+    <section className="col col-term" aria-label="التيرمينال">
       <div className="col-head">
         <h2 className="mono ltr" id="termTitle" dir="ltr">
           {'bash · ' + p.path}

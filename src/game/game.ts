@@ -187,7 +187,7 @@ export class Game {
 
     this.out.clear();
     this.out.print('bun-cafe · Level ' + n + ' · ' + level.title, 'd');
-    if (n === 1) this.out.tip('هذي طرفية اللعبة. اكتب الأوامر واضغط Enter، وابدأ بـ `help` لو تبي تشوف الأوامر.');
+    if (n === 1) this.out.tip('هذا تيرمينال اللعبة. اكتب الأوامر واضغط Enter، وابدأ بـ `help` لو تبي تشوف الأوامر.');
     else if (world.local) this.out.tip('المشروع جاهز في `~/' + world.local.dir + '` وأنت داخله.');
     this.out.print('');
 

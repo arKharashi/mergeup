@@ -2,7 +2,7 @@ import type { Pane } from './panes';
 
 const TABS: readonly [Pane, string][] = [
   ['team', 'المهمة والفريق'],
-  ['term', 'الطرفية'],
+  ['term', 'التيرمينال'],
   ['files', 'الملفات'],
 ];
 
