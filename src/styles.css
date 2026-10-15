@@ -490,6 +490,14 @@ code, .mono { font-family: var(--f-mono); }
   .editor textarea { min-height: 60px; }
   .edfoot { padding-block: 6px 8px; }
 }
+@media (max-width: 360px) {
+  .tabs button { font-size: 0.8rem; padding-inline: 4px; }
+}
+/* Bigger level cells for fingers, where the track still fits on one line. */
+@media (pointer: coarse) and (min-width: 375px) {
+  .cell { width: 16px; height: 16px; }
+  .track-cells { gap: 4px; }
+}
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
