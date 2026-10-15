@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>زملاء Git</title>
+    <meta name="description" content="لعبة مجانية تتعلم فيها git والعمل في فريق، مع مدير وزملاء افتراضيين." />
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Reem+Kufi:wght@500;700&display=swap"
+    />
+  </head>
+  <body>
+    <div class="app">
+      <header class="top">
+        <div class="brand">
+          <h1>زملاء <b>Git</b></h1>
+          <small>مكتبك الافتراضي في فريق بُن</small>
+        </div>
+        <span class="rank" id="rank" title="رتبتك في الفريق"></span>
+        <div class="track" id="track" aria-label="المستويات"></div>
+        <div class="meters">
+          <div class="meter">
+            <label>السمعة في الفريق <b id="repNum">50</b></label>
+            <div class="bar"><i id="repBar"></i></div>
+          </div>
+          <span class="starcount" id="starCount" title="مجموع النجوم">★ 0</span>
+        </div>
+      </header>
+
+      <nav class="tabs" id="tabs" role="tablist">
+        <button type="button" role="tab" data-pane="team" aria-selected="true">المهمة والفريق</button>
+        <button type="button" role="tab" data-pane="term" aria-selected="false">الطرفية</button>
+        <button type="button" role="tab" data-pane="files" aria-selected="false">الملفات</button>
+      </nav>
+
+      <main class="desk" id="desk" data-pane="team">
+        <section class="col col-team" aria-label="المهمة والفريق">
+          <div class="task" id="task"></div>
+          <div class="col-head"><h2>شات الفريق</h2><span id="clock" class="mono"></span></div>
+          <div class="chat" id="chat" aria-live="polite"></div>
+        </section>
+
+        <section class="col col-term" aria-label="الطرفية">
+          <div class="col-head">
+            <h2 class="mono ltr" id="termTitle" dir="ltr">bash</h2>
+            <button type="button" class="btn" id="rewind" title="يرجّع المستوى لبدايته">رجّع الوقت</button>
+          </div>
+          <div class="term" id="term"></div>
+          <form class="inputline" id="cmdForm" autocomplete="off">
+            <label class="p" for="cmd" id="prompt"></label>
+            <input id="cmd" type="text" spellcheck="false" autocapitalize="off" autocorrect="off" enterkeyhint="send" aria-label="اكتب أمر" />
+          </form>
+        </section>
+
+        <section class="col col-files" aria-label="الملفات">
+          <div class="col-head"><h2>ملفات المشروع</h2><span class="mono" id="repoName"></span></div>
+          <ul class="files" id="files"></ul>
+          <div class="editor" id="editor"></div>
+        </section>
+      </main>
+    </div>
+
+    <div class="overlay" id="overlay" hidden></div>
+    <div class="toasts" id="toasts" aria-live="polite"></div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
