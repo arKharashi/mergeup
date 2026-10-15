@@ -6,7 +6,8 @@ A manager and teammates are computer-controlled characters (NPCs) driven by scri
 16 levels over 4 ranks: Intern → Junior → Senior → Team Lead.
 
 - **Design spec (the source of truth for levels):** `docs/design.md` (Arabic). Read the level's scenario before building it.
-- **Audience:** Arabic-speaking developers. UI copy is Saudi Arabic. git output stays in English, like real git.
+- **Audience:** Arabic-speaking developers. Every string the player reads comes in Saudi Arabic and English, and the
+  player picks the language (Arabic by default). git output stays in English, like real git.
 - **Constraints:** free to run, static site (GitHub Pages), everything in the browser, progress in `localStorage`.
 
 ## Commands
@@ -36,8 +37,9 @@ src/
   game/      Game class (sessions, objectives, reputation, stars, chat, files), Level types, ranks, NPC team, progress.
   levels/    One file per level, plus fixtures.ts: the bun-cafe project and its scripted history.
   ui/        React 19 components, one per panel: Header, Tabs, TaskCard, ChatPanel, Terminal, FilesPanel, Modals,
-             Toasts, composed by App. Plus gameContext (GameProvider, useGame), terminalBuffer, chatPace. No game logic.
-  main.tsx   Creates the TerminalBuffer and the Game, resumes the last level, renders <App> under <GameProvider>.
+             Toasts, composed by App. Plus gameContext (GameProvider, useGame), lang (LangProvider, useLang),
+             terminalBuffer, chatPace. No game logic.
+  main.tsx   Creates the TerminalBuffer and the Game, resumes the last level, renders <App> under the providers.
 tests/       Engine behaviour vs real git, and every level's scripted solution must earn 3 stars.
 docs/        design.md
 ```
@@ -52,12 +54,14 @@ Key types:
 - `Tree` is a flat `path → content` map (no folders yet). `Commit.parents` is an array, so merges fit the model.
 - `LocalRepo.head` is `{kind:'branch', name}` or detached; `branches`, `remoteBranches` (origin/*), `upstream`.
 - `Level` (`src/game/level.ts`): `setup`, `intro`, `objectives`, `hints` (3 tiers), `help`, hooks, `solution`.
+- `Bilingual` (`src/engine/output.ts`) is `{ ar, en }`: every player-facing string, from engine tips to chat lines.
 
 ## Engine rules
 
 - **Match real git.** Messages, spacing, hints and exit behaviour must match git 2.4x for the same situation.
   When unsure, reproduce it with real git in a scratch repo and copy the output. Tests assert exact strings.
-- git output is English. Arabic appears only in `out.tip(...)` coaching lines (rendered RTL in the terminal).
+- git output is English and plain strings. Coaching goes through `out.tip({ ar, en })`; the terminal shows it in the
+  player's language (RTL for Arabic). A line segment can be `Bilingual` too (the `help` descriptions).
 - No level-specific logic in the engine. Levels react through hooks; the engine only reports what happened.
 - Commands not simulated yet are listed in `NOT_YET` (`src/engine/git/index.ts`).
   Rank gates live in `UNLOCKS` (`src/game/ranks.ts`); the engine asks `ctx.lockedUntil(feature)`.
@@ -73,23 +77,30 @@ Use `/new-level <n>` (see `.claude/commands/new-level.md`) or follow this checkl
 2. Create `src/levels/lNN-<slug>.ts` exporting a `Level`, and add it to `LEVELS` in `src/levels/index.ts` (index = id − 1).
 3. `setup(player)`: return the starting world from fixtures (`bunCafeHistory`, `cloneRepo`), plus any `data`.
    Extend the bun-cafe project; don't invent a new one. New files and NPC commits go in `fixtures.ts`.
-4. `intro(api)`: NPC chat via `api.say(who, text, opts)`. Questions use `opts.question` (see level 2).
+4. `intro(api)`: NPC chat via `api.say(who, { ar, en }, opts)`. Questions use `opts.question` (see level 2): each
+   option is a `Choice`, `{ value, label: { ar, en } }`; `same('12')` for one that reads the same in both.
 5. `objectives`: 3–5 checks on world state (the remote, the clone, files). Use `api.ran` only for read-only
    commands such as `log`. Objectives are re-checked after every command and every saved file.
 6. `hints`: tier 1 a nudge, tier 2 the commands, tier 3 the full solution (opening it costs the third star).
-7. `help`: the `help` cheat sheet, `[command, Arabic description]`.
+7. `help`: the `help` cheat sheet, `[command, { ar, en }]`.
 8. Hooks for consequences: `onCommit`, `onPush` (return `'handled'` to skip the default commit-message check),
-   `api.rep(delta, reason)`, `api.fail(reason)`. Mistakes should cost reputation and teach, not dead-end.
-9. `solution(player)`: a script that beats the level. `tests/levels.test.ts` plays it and requires 3 stars.
+   `api.rep(delta, { ar, en })`, `api.fail({ ar, en })`. Mistakes should cost reputation and teach, not dead-end.
+9. `solution(player)`: a script that beats the level. `tests/levels.test.ts` plays it, requires 3 stars, and checks
+   that everything the player reads along the way has Arabic and English.
 10. Add tests for the level's traps (what happens when the player does the wrong thing).
 11. `npm run check`, then play it in the browser at desktop and phone width.
 
 ## Copy and characters
 
-- Player-facing text is Saudi Arabic dialect: short, friendly, concrete. "حياك في الفريق"، "وش تغيّر"، "ارفعه للفريق".
+- Write every player-facing string twice, as `{ ar, en }`. Write each one in its own language, not word for word.
+- Arabic is Saudi dialect: short, friendly, concrete. "حياك في الفريق"، "وش تغيّر"، "ارفعه للفريق". The terminal is
+  "التيرمينال" (masculine), not "الطرفية".
+- English is plain and friendly, with the same meaning and tone. Use ’ for apostrophes, so strings need no escapes.
+  English may quote Arabic that appears in the project itself, in «guillemets» (the README's «الفريق» heading).
 - Wrap commands, file names and paths in backticks; `<Md text={…} />` turns them into `<code>`, which is isolated LTR.
-- Keep each NPC in character (`src/game/team.ts`): أبو فهد calm and explains why; خالد strict and terse;
-  سارة fast and merges without asking; نورة helpful; ريان eager and careless; سلمان unsure.
+- Keep each NPC in character in both languages (`src/game/team.ts`): أبو فهد (Abu Fahd) calm and explains why;
+  خالد (Khalid) strict and terse; سارة (Sara) fast and merges without asking; نورة (Noura) helpful;
+  ريان (Rayan) eager and careless; سلمان (Salman) unsure. Their git identity keeps the Arabic name in both languages.
 - Commit messages, file names and code inside the bun-cafe project are English.
 - No emoji in the UI.
 
@@ -113,7 +124,10 @@ Use `/new-level <n>` (see `.claude/commands/new-level.md`) or follow this checkl
 - One-off reactions to an event (a toast, the complete card) use `useGameEvent(event, fn)`, not `useGame()`.
 - The terminal's output is a `TerminalBuffer`, the engine's `Out`. `Terminal` renders it; `game.loadLevel` clears it.
 - Panels with per-level state (`TaskCard`, `FilesPanel`) get `key={session id}`, so loading a level resets them.
-- No `innerHTML` or `dangerouslySetInnerHTML`. Arabic copy with backticks goes through `<Md>`.
+- No `innerHTML` or `dangerouslySetInnerHTML`. Copy with backticks goes through `<Md>`.
+- Language: `const { t, lang } = useLang()`, then `t({ ar, en })` for UI copy and `t(text)` for game copy.
+  `LangProvider` sets `<html lang dir>`, so the layout mirrors in English. In CSS use logical properties
+  (`inline-start`, `inset-inline-end`, `text-align: start`); a physical side needs a `:root[dir="ltr"]` override.
 - `styles.css` targets the existing classes, ids and data attributes (`#term`, `.msg[data-who]`, `.desk[data-pane]`).
   Keep them when you change markup.
 - Components are PascalCase `.tsx`, one per file; hooks and helpers are camelCase.
@@ -122,6 +136,7 @@ Use `/new-level <n>` (see `.claude/commands/new-level.md`) or follow this checkl
 
 `localStorage` key `zumala-git:progress:v1`, shape `Progress` in `src/game/progress.ts`. Reading and writing
 must never throw (private windows). If the shape changes, bump the key version and migrate.
+The language is a browser preference under its own key, `zumala-git:lang` (`'ar'` or `'en'`), not part of `Progress`.
 The in-level repo is not saved: reloading the page restarts the current level.
 
 ## Roadmap
@@ -144,5 +159,6 @@ The in-level repo is not saved: reloading the page restarts the current level.
   dependencies without a lockfile. Keep `package-lock.json` committed and use `npm ci` in CI.
 - `vite.config.ts` uses `base: './'` so the build works under `https://<user>.github.io/<repo>/`.
 - Dates in git output use Riyadh time (+0300), the team's timezone (`gitDate` in `format.ts`).
-- Player names can match an NPC's name ("خالد"); level checks must not confuse them (see `hasPlayerLine`).
+- Player names can match an NPC's name ("خالد"), and players spell their own name in different ways ("عبد الرحمن",
+  "Abdulrahman"). Check names with `hasPlayerLine`, which folds spellings and ignores lines that were already there.
 - This project teaches good commits, so its own history should have them: one change per commit, imperative English subject.

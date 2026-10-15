@@ -4,11 +4,12 @@
 
 مصممة للمبرمج اللي يشتغل لحاله: يعرف `add` و`commit` و`push`، بس ما جرب conflict مع زميل، ولا code review، ولا hotfix وهو في نص شغل.
 
-_A free browser game (in Arabic) that teaches git and teamwork with a virtual manager and teammates._
+_A free browser game (in Arabic or English) that teaches git and teamwork with a virtual manager and teammates._
 
 ## وش فيها
 
-- **تيرمينال يشتغل مثل git الحقيقي:** نفس الأوامر ونفس الرسائل، مع تلميحات بالعربي لما تغلط.
+- **تيرمينال يشتغل مثل git الحقيقي:** نفس الأوامر ونفس الرسائل، مع تلميحات لما تغلط.
+- **بالعربي أو بالإنجليزي:** تختار لغة الواجهة، والفريق يكلمك بها.
 - **فريق افتراضي:** أبو فهد المدير، خالد المراجع الصارم، سارة اللي تدمج قبلك، وغيرهم. يتفاعلون مع اللي تسويه.
 - **رتب وظيفية بدل أرقام:** متدرب ← Junior ← Senior ← مدير فريق، في 16 مستوى.
 - **سمعة ونجوم:** الغلط ما يوقف اللعبة، بس الفريق يتذكره.

@@ -11,6 +11,7 @@ Build level $ARGUMENTS of Zumala Git.
    Build missing engine features first. Their output must match real git; add tests to `tests/git.test.ts`.
 3. Write `src/levels/lNN-<slug>.ts` following the "Writing a level" checklist in `CLAUDE.md`, and register it in `src/levels/index.ts`.
    Extend the bun-cafe fixtures rather than inventing a new project. Keep every NPC in character.
+   Every string the player reads is `{ ar, en }`: Saudi Arabic and plain English, each written in its own language.
 4. Give it a `solution()` that earns 3 stars, and add tests in `tests/levels.test.ts` for the level's traps.
 5. Run `npm run check` until it passes.
 6. Reply with: what the level does, what you added to the engine, and anything you changed from the design and why.
