@@ -31,9 +31,35 @@ describe('every level', () => {
       game.revealHint();
       game.revealHint();
       expect(game.hints()).toHaveLength(3);
-      expect(game.hints().every((h) => h.length > 10)).toBe(true);
+      expect(game.hints().every((h) => h.ar.length > 10 && h.en.length > 10)).toBe(true);
       expect(lv.help.length).toBeGreaterThan(0);
       expect(game.session!.usedSolution).toBe(true);
+    });
+
+    it(`level ${lv.id}: everything the player reads comes in Arabic and English`, () => {
+      const { game, out } = makeGame('Reem');
+      game.progress.unlocked = lv.id;
+      game.loadLevel(lv.id);
+      play(game, lv.solution('Reem'));
+      game.revealHint();
+      game.revealHint();
+      game.revealHint();
+      const s = game.session!;
+      const copy = [
+        lv.title,
+        lv.summary,
+        ...game.objectives().map((o) => o.text),
+        ...game.hints(),
+        ...lv.help.map(([, d]) => d),
+        ...s.chat.filter((m) => m.who !== 'you').map((m) => m.text),
+        ...out.tips,
+      ];
+      for (const c of copy) {
+        expect(c.ar.trim(), c.en).not.toBe('');
+        expect(c.en.trim(), c.ar).not.toBe('');
+        // English may quote Arabic (the README's «الفريق» heading), but not be Arabic.
+        expect(c.en.replace(/«[^»]*»/g, ''), c.ar).not.toMatch(/[\u0600-\u06FF]/);
+      }
     });
   }
 });
@@ -69,11 +95,11 @@ describe('level 1: first day', () => {
   it('shows the expected name, and says so when a pushed line has another one', () => {
     const { game } = makeGame('Abdulrahman');
     game.loadLevel(1);
-    expect(game.objectives()[1]!.text).toContain('(Abdulrahman)');
+    expect(game.objectives()[1]!.text.en).toContain('(Abdulrahman)');
     play(game, ['git clone ' + REPO_URL, 'cd bun-cafe', 'echo "- عبدالرحمن — متدرب" >> README.md']);
     play(game, ['git add .', 'git commit -m "Add my name to the team list"', 'git push']);
     expect(game.objectives()[4]!.done).toBe(false);
-    expect(game.session!.chat.some((m) => m.who === 'abufahd' && m.text.includes('«Abdulrahman»'))).toBe(true);
+    expect(game.session!.chat.some((m) => m.who === 'abufahd' && m.text.ar.includes('«Abdulrahman»') && m.text.en.includes('«Abdulrahman»'))).toBe(true);
     play(game, ['echo "- Abdulrahman — Intern" >> README.md', 'git add .', 'git commit -m "Write my name as I signed up"', 'git push']);
     expect(game.session!.status).toBe('done');
   });
@@ -87,7 +113,7 @@ describe('level 1: first day', () => {
     play(game, ['git clone ' + REPO_URL, 'cd bun-cafe', 'echo "- ريم" >> README.md', 'git add .', 'git commit -m fix', 'git push']);
     expect(game.progress.rep).toBe(rep - 5);
     expect(stars).toBe(2);
-    expect(game.session!.chat.some((m) => m.who === 'abufahd' && m.text.includes('`fix`'))).toBe(true);
+    expect(game.session!.chat.some((m) => m.who === 'abufahd' && m.text.ar.includes('`fix`') && m.text.en.includes('`fix`'))).toBe(true);
   });
 
   it('promotes to Junior after the last Intern level', () => {
@@ -138,7 +164,7 @@ describe('level 3: tidy commits', () => {
   it('fails when the .env file is pushed', () => {
     const { game } = start();
     let reason = '';
-    game.on('fail', (e) => (reason = e.reason));
+    game.on('fail', (e) => (reason = e.reason.ar));
     play(game, ['git add .', 'git commit -m "Add all of yesterday\'s work"', 'git push']);
     expect(game.session!.status).toBe('failed');
     expect(reason).toContain('.env');

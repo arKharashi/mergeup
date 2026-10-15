@@ -3,31 +3,39 @@
  * g green, r red, y yellow, c cyan, bl blue (folders, paths), b bold, d dim, p prompt.
  */
 export type Tone = '' | 'g' | 'r' | 'y' | 'c' | 'bl' | 'b' | 'd' | 'p';
-export type Segment = readonly [text: string, tone?: Tone];
+
+/** Player-facing copy in both languages; the UI shows the one the player picked. Backticks mark `code`. */
+export interface Bilingual {
+  ar: string;
+  en: string;
+}
+
+/** Plain text is the same in both languages (git output). Bilingual text is coaching, such as the help descriptions. */
+export type Segment = readonly [text: string | Bilingual, tone?: Tone];
 
 /** Where commands write. The UI terminal implements it; tests use BufferOut. */
 export interface Out {
   line(segments: readonly Segment[]): void;
   print(text: string, tone?: Tone): void;
-  /** A coaching line in Arabic. Backticks mark `code`. */
-  tip(text: string): void;
+  /** A coaching line. */
+  tip(text: Bilingual): void;
   clear(): void;
 }
 
-/** Collects output as plain text. Used by tests. */
+/** Collects output as plain text, in Arabic. Used by tests. */
 export class BufferOut implements Out {
   lines: string[] = [];
-  tips: string[] = [];
+  tips: Bilingual[] = [];
 
   line(segments: readonly Segment[]): void {
-    this.lines.push(segments.map((s) => s[0]).join(''));
+    this.lines.push(segments.map(([t]) => (typeof t === 'string' ? t : t.ar)).join(''));
   }
   print(text: string): void {
     for (const l of text.split('\n')) this.lines.push(l);
   }
-  tip(text: string): void {
+  tip(text: Bilingual): void {
     this.tips.push(text);
-    this.lines.push('» ' + text);
+    this.lines.push('» ' + text.ar);
   }
   clear(): void {
     this.lines = [];

@@ -6,17 +6,21 @@ import { browserStore } from './game/progress';
 import { LEVELS } from './levels';
 import { App } from './ui/App';
 import { GameProvider } from './ui/gameContext';
+import { LangProvider } from './ui/lang';
 import { TerminalBuffer } from './ui/terminalBuffer';
 
+const store = browserStore();
 const terminal = new TerminalBuffer();
-const game = new Game(LEVELS, terminal, browserStore());
+const game = new Game(LEVELS, terminal, store);
 if (game.hasPlayer()) game.resume();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <GameProvider game={game}>
-      <App terminal={terminal} />
-    </GameProvider>
+    <LangProvider store={store}>
+      <GameProvider game={game}>
+        <App terminal={terminal} />
+      </GameProvider>
+    </LangProvider>
   </StrictMode>,
 );
 

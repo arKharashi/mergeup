@@ -58,7 +58,7 @@ export function runLine(ctx: Ctx, raw: string): void {
   const toks = tokenize(normalizeInput(raw));
   if (toks === null) {
     ctx.out.print('bash: unexpected EOF while looking for matching quote', 'r');
-    ctx.out.tip('فيه علامة تنصيص `"` مفتوحة وما تسكّرت.');
+    ctx.out.tip({ ar: 'فيه علامة تنصيص `"` مفتوحة وما تسكّرت.', en: 'There’s a `"` quote that was opened and never closed.' });
     return;
   }
   const commands: string[][] = [[]];
@@ -116,16 +116,26 @@ function exec(ctx: Ctx, args: string[]): boolean {
     case 'code':
     case 'open':
       ctx.out.print('bash: ' + cmd + ': command not available here', 'r');
-      ctx.out.tip('عدّل الملفات من لوحة «الملفات»، أو بـ `echo "نص" >> file`.');
+      ctx.out.tip({
+        ar: 'عدّل الملفات من لوحة «الملفات»، أو بـ `echo "نص" >> file`.',
+        en: 'Edit files in the Files panel, or with `echo "text" >> file`.',
+      });
       return false;
     default: {
       const path = cmd.replace(/^~(?=\/|$)/, '/home/dev');
       // bash doesn't look up a word with a slash as a command: it tries to run the file at that path.
       if (path.includes('/')) return runPath(ctx, path);
       ctx.out.print('bash: ' + cmd + ': command not found', 'r');
-      if (/^(status|add|commit|push|pull|log|clone|diff|show)$/.test(cmd)) ctx.out.tip('نسيت كلمة `git` قبل الأمر. جرّب: `git ' + cmd + '`');
-      else if (isRepoUrl(cmd)) urlTip(ctx, cmd);
-      else ctx.out.tip('اكتب `help` تشوف الأوامر المتاحة.');
+      if (/^(status|add|commit|push|pull|log|clone|diff|show)$/.test(cmd)) {
+        ctx.out.tip({
+          ar: 'نسيت كلمة `git` قبل الأمر. جرّب: `git ' + cmd + '`',
+          en: 'You left out `git`. Try: `git ' + cmd + '`',
+        });
+      } else if (isRepoUrl(cmd)) {
+        urlTip(ctx, cmd);
+      } else {
+        ctx.out.tip({ ar: 'اكتب `help` تشوف الأوامر المتاحة.', en: 'Type `help` to see the commands you can use.' });
+      }
       return false;
     }
   }
@@ -136,8 +146,17 @@ const isRepoUrl = (s: string): boolean => /^(https?|ssh|git):\/\/|^git@|\/[^/]+\
 /** Players paste the clone URL from the chat on its own. */
 function urlTip(ctx: Ctx, url: string): void {
   const L = ctx.world.local;
-  if (L) ctx.out.tip('هذا رابط المشروع، ونسخته عندك من قبل في `~/' + L.dir + '`.');
-  else ctx.out.tip('هذا رابط المشروع، والرابط لحاله مو أمر. استنسخه كذا: `git clone ' + url + '`');
+  if (L) {
+    ctx.out.tip({
+      ar: 'هذا رابط المشروع، ونسخته عندك من قبل في `~/' + L.dir + '`.',
+      en: 'That’s the project’s link, and you already have a copy in `~/' + L.dir + '`.',
+    });
+  } else {
+    ctx.out.tip({
+      ar: 'هذا رابط المشروع، والرابط لحاله مو أمر. استنسخه كذا: `git clone ' + url + '`',
+      en: 'That’s the project’s link, but a link on its own isn’t a command. Clone it like this: `git clone ' + url + '`',
+    });
+  }
 }
 
 /** Running a path, as bash 5 reports it. Nothing in this world is executable. */
@@ -147,20 +166,27 @@ function runPath(ctx: Ctx, path: string): boolean {
   if (!found) {
     out.print('bash: ' + path + ': No such file or directory', 'r');
     if (isRepoUrl(path)) urlTip(ctx, path);
-    else out.tip('اكتب `help` تشوف الأوامر المتاحة.');
+    else out.tip({ ar: 'اكتب `help` تشوف الأوامر المتاحة.', en: 'Type `help` to see the commands you can use.' });
   } else if (found.dir !== undefined) {
     out.print('bash: ' + path + ': Is a directory', 'r');
     const target = found.dir ? '~/' + found.dir : '~';
     // `cd` only knows home and the clone.
-    if (!found.dir.includes('/') && target !== world.cwd) out.tip('هذا مجلد، والمجلد ما ينشغّل. تدخله بـ `cd ' + target + '`');
+    if (!found.dir.includes('/') && target !== world.cwd) {
+      out.tip({
+        ar: 'هذا مجلد، والمجلد ما ينشغّل. تدخله بـ `cd ' + target + '`',
+        en: 'That’s a folder, and folders don’t run. Go into it with `cd ' + target + '`',
+      });
+    }
   } else if (path.endsWith('/')) {
     out.print('bash: ' + path + ': Not a directory', 'r');
   } else {
     out.print('bash: ' + path + ': Permission denied', 'r');
-    out.tip(
-      '`' + found.file + '` ملف، والملفات ما تنشغّل مثل الأوامر. تشوف محتواه بـ ' +
-        (inRepo(world) ? '`cat ' + found.file + '`' : '`cd ' + world.local!.dir + '` ثم `cat ' + found.file + '`'),
-    );
+    const cat = '`cat ' + found.file + '`';
+    const cd = '`cd ' + world.local!.dir + '`';
+    out.tip({
+      ar: '`' + found.file + '` ملف، والملفات ما تنشغّل مثل الأوامر. تشوف محتواه بـ ' + (inRepo(world) ? cat : cd + ' ثم ' + cat),
+      en: '`' + found.file + '` is a file, and files don’t run like commands. See what’s in it with ' + (inRepo(world) ? cat : cd + ' then ' + cat),
+    });
   }
   return false;
 }
@@ -195,7 +221,12 @@ function resolvePath(world: World, path: string): { dir: string; file?: undefine
 function needRepoFile(ctx: Ctx, name: string, cmd: string): boolean {
   if (inRepo(ctx.world)) return true;
   ctx.out.print(cmd + ': ' + name + ': No such file or directory', 'r');
-  if (ctx.world.local) ctx.out.tip('الملفات داخل مجلد المشروع. ادخله أول: `cd ' + ctx.world.local.dir + '`');
+  if (ctx.world.local) {
+    ctx.out.tip({
+      ar: 'الملفات داخل مجلد المشروع. ادخله أول: `cd ' + ctx.world.local.dir + '`',
+      en: 'The files are inside the project folder. Go in first: `cd ' + ctx.world.local.dir + '`',
+    });
+  }
   return false;
 }
 
@@ -204,7 +235,12 @@ function ls(ctx: Ctx, args: string[]): boolean {
   const all = args.some((a) => /^-\w*a/.test(a));
   if (!inRepo(world)) {
     if (world.local) out.line([[world.local.dir + '/', 'bl']]);
-    else out.tip('المجلد فاضي. المشروع لسا ما انسحب لجهازك.');
+    else {
+      out.tip({
+        ar: 'المجلد فاضي. المشروع لسا ما انسحب لجهازك.',
+        en: 'This folder is empty: the project isn’t on your machine yet.',
+      });
+    }
     return true;
   }
   const names = Object.keys(world.local!.work).sort();
@@ -227,8 +263,17 @@ function cd(ctx: Ctx, target: string | undefined): boolean {
     return true;
   }
   out.print('bash: cd: ' + target + ': No such file or directory', 'r');
-  if (world.local && name === world.local.dir) out.tip('أنت أصلاً داخل `' + world.local.dir + '`.');
-  else if (!world.local && name === 'bun-cafe') out.tip('المجلد ما انوجد لأنك ما استنسخت المشروع للحين.');
+  if (world.local && name === world.local.dir) {
+    out.tip({
+      ar: 'أنت أصلاً داخل `' + world.local.dir + '`.',
+      en: 'You’re already inside `' + world.local.dir + '`.',
+    });
+  } else if (!world.local && name === 'bun-cafe') {
+    out.tip({
+      ar: 'المجلد ما انوجد لأنك ما استنسخت المشروع للحين.',
+      en: 'The folder isn’t there because you haven’t cloned the project yet.',
+    });
+  }
   return false;
 }
 
@@ -301,10 +346,13 @@ function rm(ctx: Ctx, args: string[]): boolean {
 
 function help(ctx: Ctx): boolean {
   const { out } = ctx;
-  out.tip('الأوامر اللي تحتاجها في هذا المستوى:');
+  out.tip({ ar: 'الأوامر اللي تحتاجها في هذا المستوى:', en: 'The commands you need in this level:' });
   for (const [c, d] of ctx.help) out.line([['  ' + c.padEnd(30), 'y'], [d, 'd']]);
   out.print('');
   out.line([['  ' + SHELL_COMMANDS.filter((c) => c !== 'git' && c !== 'help').join(', '), 'd']]);
-  out.tip('الأسهم ↑ ↓ ترجّع أوامرك السابقة، و Tab يكمّل أسماء الملفات.');
+  out.tip({
+    ar: 'الأسهم ↑ ↓ ترجّع أوامرك السابقة، و Tab يكمّل أسماء الملفات.',
+    en: 'The ↑ ↓ arrows bring back earlier commands, and Tab completes file names.',
+  });
   return true;
 }

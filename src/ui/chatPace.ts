@@ -9,7 +9,7 @@ export const isPerson = (who: Who): who is NpcId => who !== 'system' && who !== 
 
 function typingDelay(m: ChatMessage): number {
   if (reducedMotion()) return 60;
-  return isPerson(m.who) ? Math.min(1500, 450 + m.text.length * 9) : 120;
+  return isPerson(m.who) ? Math.min(1500, 450 + m.text.ar.length * 9) : 120;
 }
 
 /**

@@ -125,7 +125,8 @@ code, .mono { font-family: var(--f-mono); }
 .brand small { color: var(--muted); font-size: 0.82rem; }
 .rank {
   display: inline-flex; align-items: center; gap: 8px;
-  padding: 3px 12px 3px 10px;
+  padding-block: 3px;
+  padding-inline: 12px 10px;
   border: 1px solid var(--line);
   border-radius: 999px;
   font-size: 0.85rem;
@@ -169,7 +170,7 @@ code, .mono { font-family: var(--f-mono); }
 }
 .tabs button[aria-selected="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
 .tabs button .dot {
-  position: absolute; top: 5px; left: 8px;
+  position: absolute; top: 5px; inset-inline-end: 8px;
   width: 7px; height: 7px; border-radius: 50%;
   background: var(--accent);
 }
@@ -318,12 +319,14 @@ code, .mono { font-family: var(--f-mono); }
 .tl .d { color: var(--term-dim); }
 .tl .p { color: var(--t-green); }
 .tl.tip {
-  direction: rtl; text-align: right;
+  /* The terminal is LTR; a tip takes the player's language through its dir attribute. */
+  text-align: start;
   font-family: var(--f-body);
   font-size: 13px;
   color: var(--t-yellow);
-  border-right: 2px solid var(--t-yellow);
-  padding: 1px 10px 1px 0;
+  border-inline-start: 2px solid var(--t-yellow);
+  padding-block: 1px;
+  padding-inline: 10px 0;
   margin: 3px 0 6px;
   white-space: normal;
 }
@@ -410,11 +413,14 @@ code, .mono { font-family: var(--f-mono); }
 .card .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
 .card .actions .btn { padding: 8px 16px; font-size: 0.92rem; }
 .stars { font-size: 2rem; letter-spacing: 6px; color: var(--accent); line-height: 1; direction: ltr; text-align: right; }
+:root[dir="ltr"] .stars { text-align: left; }
 .stars .off { color: var(--line); }
 .facts { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; font-size: 0.88rem; }
 .facts li { display: flex; justify-content: space-between; gap: 12px; border-bottom: 1px dashed var(--line); padding-bottom: 4px; }
 .facts b { font-family: var(--f-mono); font-weight: 500; font-variant-numeric: tabular-nums; }
-.quote { border-right: 3px solid var(--accent); padding: 4px 12px 4px 0; color: var(--ink); font-size: 0.95rem; }
+.quote { border-inline-start: 3px solid var(--accent); padding-block: 4px; padding-inline: 12px 0; color: var(--ink); font-size: 0.95rem; }
+.card-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.langbtn { white-space: nowrap; }
 
 /* Toasts */
 .toasts {
@@ -424,6 +430,8 @@ code, .mono { font-family: var(--f-mono); }
   display: flex; flex-direction: column; gap: 6px;
   z-index: 15; pointer-events: none;
 }
+/* Toasts sit at the end of the line: left in Arabic, right in English. */
+:root[dir="ltr"] .toasts { left: auto; right: calc(16px + env(safe-area-inset-right, 0px)); }
 .toast {
   background: var(--ink); color: var(--bg);
   padding: 7px 14px; border-radius: 8px;

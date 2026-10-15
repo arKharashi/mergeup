@@ -5,6 +5,7 @@ import { reducedMotion } from './dom';
 import { FilesPanel } from './FilesPanel';
 import { useGame, useGameEvent } from './gameContext';
 import { Header } from './Header';
+import { useLang } from './lang';
 import { Modals, type Modal } from './Modals';
 import { defaultPane, isVisible, isWide, type Pane } from './panes';
 import { Tabs } from './Tabs';
@@ -18,6 +19,7 @@ type Outcome = Extract<Modal, { kind: 'complete' | 'fail' }>;
 /** The office: header, the three panes, and the cards and toasts on top. */
 export function App({ terminal }: { terminal: TerminalBuffer }) {
   const game = useGame();
+  const { t } = useLang();
   const session = game.session;
   // A new object on every show, so showing the terminal again focuses it again.
   const [view, setView] = useState<{ pane: Pane }>(() => ({ pane: game.hasPlayer() ? defaultPane() : 'team' }));
@@ -73,9 +75,9 @@ export function App({ terminal }: { terminal: TerminalBuffer }) {
     if (s && s.status === 'playing' && Object.keys(s.ran).length) {
       setModal({
         kind: 'confirm',
-        title: 'تنتقل للمستوى ' + n + '؟',
-        text: 'شغلك في المستوى الحالي بيرجع لبدايته.',
-        ok: 'انتقل',
+        title: { ar: 'تنتقل للمستوى ' + n + '؟', en: 'Go to level ' + n + '?' },
+        text: { ar: 'شغلك في المستوى الحالي بيرجع لبدايته.', en: 'Your work in this level will be reset.' },
+        ok: { ar: 'انتقل', en: 'Go' },
         onOk: () => load(n),
       });
     } else load(n);
@@ -86,9 +88,12 @@ export function App({ terminal }: { terminal: TerminalBuffer }) {
     if (!s) return;
     setModal({
       kind: 'confirm',
-      title: 'ترجّع المستوى لبدايته؟',
-      text: 'المشروع والشات يرجعون مثل أول ما بدأت المستوى. سمعتك ونجومك السابقة تبقى مثل ما هي.',
-      ok: 'رجّع الوقت',
+      title: { ar: 'ترجّع المستوى لبدايته؟', en: 'Restart this level?' },
+      text: {
+        ar: 'المشروع والشات يرجعون مثل أول ما بدأت المستوى. سمعتك ونجومك السابقة تبقى مثل ما هي.',
+        en: 'The project and the chat go back to how they were when the level started. Your reputation and earned stars stay as they are.',
+      },
+      ok: { ar: 'رجّع الوقت', en: 'Rewind' },
       onOk: () => load(s.level.id, true),
     });
   };
@@ -101,7 +106,7 @@ export function App({ terminal }: { terminal: TerminalBuffer }) {
         <Header onPickLevel={pickLevel} />
         <Tabs current={view.pane} dots={dots} onShow={showPane} />
         <main className="desk" id="desk" data-pane={view.pane}>
-          <section className="col col-team" aria-label="المهمة والفريق">
+          <section className="col col-team" aria-label={t({ ar: 'المهمة والفريق', en: 'Task and team' })}>
             <TaskCard key={sid} />
             <ChatPanel shown={shown} />
           </section>

@@ -10,6 +10,7 @@ import {
   type Ref,
 } from 'react';
 import { useGame } from './gameContext';
+import { dirOf, useLang, type Lang } from './lang';
 import { Md } from './Md';
 import type { TerminalBuffer, TermLine } from './terminalBuffer';
 
@@ -21,6 +22,7 @@ export interface TerminalHandle {
 /** The terminal pane: what the engine wrote to the buffer, and the command line. */
 export function Terminal({ buffer, onRewind, ref }: { buffer: TerminalBuffer; onRewind: () => void; ref?: Ref<TerminalHandle> }) {
   const game = useGame();
+  const { lang, t } = useLang();
   const lines = useSyncExternalStore(buffer.subscribe, buffer.getSnapshot);
   const [value, setValue] = useState('');
   const history = useRef<string[]>([]);
@@ -95,13 +97,19 @@ export function Terminal({ buffer, onRewind, ref }: { buffer: TerminalBuffer; on
 
   const p = game.prompt();
   return (
-    <section className="col col-term" aria-label="التيرمينال">
+    <section className="col col-term" aria-label={t({ ar: 'التيرمينال', en: 'Terminal' })}>
       <div className="col-head">
         <h2 className="mono ltr" id="termTitle" dir="ltr">
           {'bash · ' + p.path}
         </h2>
-        <button type="button" className="btn" id="rewind" title="يرجّع المستوى لبدايته" onClick={onRewind}>
-          رجّع الوقت
+        <button
+          type="button"
+          className="btn"
+          id="rewind"
+          title={t({ ar: 'يرجّع المستوى لبدايته', en: 'Restart the level from the beginning' })}
+          onClick={onRewind}
+        >
+          {t({ ar: 'رجّع الوقت', en: 'Rewind' })}
         </button>
       </div>
       <div
@@ -112,7 +120,7 @@ export function Terminal({ buffer, onRewind, ref }: { buffer: TerminalBuffer; on
           if (!String(window.getSelection() ?? '')) focus();
         }}
       >
-        <Lines lines={lines} />
+        <Lines lines={lines} lang={lang} />
       </div>
       <form className="inputline" id="cmdForm" autoComplete="off" onSubmit={submit}>
         <label className="p" htmlFor="cmd" id="prompt">
@@ -130,7 +138,7 @@ export function Terminal({ buffer, onRewind, ref }: { buffer: TerminalBuffer; on
           autoCapitalize="off"
           autoCorrect="off"
           enterKeyHint="send"
-          aria-label="اكتب أمر"
+          aria-label={t({ ar: 'اكتب أمر', en: 'Type a command' })}
         />
       </form>
     </section>
@@ -138,17 +146,17 @@ export function Terminal({ buffer, onRewind, ref }: { buffer: TerminalBuffer; on
 }
 
 /** Memoised so typing in the command line doesn't re-render the whole scrollback. */
-const Lines = memo(function Lines({ lines }: { lines: readonly TermLine[] }) {
+const Lines = memo(function Lines({ lines, lang }: { lines: readonly TermLine[]; lang: Lang }) {
   return lines.map((l) =>
     l.kind === 'tip' ? (
-      <div key={l.id} className="tl tip">
-        <Md text={l.text} />
+      <div key={l.id} className="tl tip" dir={dirOf(lang)}>
+        <Md text={l.text[lang]} />
       </div>
     ) : (
       <div key={l.id} className="tl">
         {l.segments.map(([text, tone], i) => (
           <span key={i} className={tone || undefined}>
-            {text}
+            {typeof text === 'string' ? text : text[lang]}
           </span>
         ))}
       </div>

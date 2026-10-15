@@ -73,23 +73,41 @@ export function git(ctx: Ctx, args: string[]): boolean {
 
   const rank = ctx.lockedUntil(sub);
   if (rank) {
-    out.tip('الأمر `git ' + sub + '` ينفتح لك في رتبة ' + rank + '.');
+    out.tip({
+      ar: 'الأمر `git ' + sub + '` ينفتح لك في رتبة ' + rank + '.',
+      en: '`git ' + sub + '` unlocks at the ' + rank + ' rank.',
+    });
     return false;
   }
 
   let ok: boolean;
   if (sub === 'clone') ok = gitClone(ctx, rest);
   else if (sub === 'init') {
-    out.tip('ما تحتاج `git init` هنا. المشروع موجود عند الفريق، خذ نسخة منه بـ `git clone` والرابط في رسالة أبو فهد.');
+    out.tip({
+      ar: 'ما تحتاج `git init` هنا. المشروع موجود عند الفريق، خذ نسخة منه بـ `git clone` والرابط في رسالة أبو فهد.',
+      en: 'You don’t need `git init` here. The project already lives with the team: get a copy with `git clone` and the link in Abu Fahd’s message.',
+    });
     ok = false;
   } else if (sub === 'config') ok = gitConfig(ctx, rest);
   else if (NOT_YET.includes(sub)) {
-    out.tip('الأمر `git ' + sub + '` لسا ما انبنى في المحاكي.');
+    out.tip({
+      ar: 'الأمر `git ' + sub + '` لسا ما انبنى في المحاكي.',
+      en: '`git ' + sub + '` isn’t built into the simulator yet.',
+    });
     ok = false;
   } else if (!inRepo(world)) {
     out.print('fatal: not a git repository (or any of the parent directories): .git', 'r');
-    if (world.local) out.tip('أنت برا مجلد المشروع. ادخله بـ `cd ' + world.local.dir + '`');
-    else out.tip('ما عندك نسخة من المشروع للحين. ابدأ بـ `git clone` والرابط اللي أرسله أبو فهد.');
+    if (world.local) {
+      out.tip({
+        ar: 'أنت برا مجلد المشروع. ادخله بـ `cd ' + world.local.dir + '`',
+        en: 'You’re outside the project folder. Go in with `cd ' + world.local.dir + '`',
+      });
+    } else {
+      out.tip({
+        ar: 'ما عندك نسخة من المشروع للحين. ابدأ بـ `git clone` والرابط اللي أرسله أبو فهد.',
+        en: 'You don’t have a copy of the project yet. Start with `git clone` and the link Abu Fahd sent.',
+      });
+    }
     ok = false;
   } else {
     ok = IN_REPO[sub]!(ctx, rest);
@@ -111,7 +129,10 @@ function gitConfig(ctx: Ctx, args: string[]): boolean {
       out.print(rest[0] === 'user.name' ? world.me.name : world.me.email);
       return true;
     }
-    out.tip('اسمك وإيميلك ضبطناها لك من أول يوم، وهي اللي تظهر في الـ commits حقتك.');
+    out.tip({
+      ar: 'اسمك وإيميلك ضبطناها لك من أول يوم، وهي اللي تظهر في الـ commits حقتك.',
+      en: 'We set up your name and email on day one. They’re what shows on your commits.',
+    });
     return true;
   }
   if (!rest.length) {
@@ -129,10 +150,13 @@ function gitBranch(ctx: Ctx, args: string[]): boolean {
   if (!listing) {
     const rank = ctx.lockedUntil('branch create');
     if (rank) {
-      out.tip('إنشاء الفروع ينفتح لك في رتبة ' + rank + '. في رتبة Intern تشتغل على `main` بس.');
+      out.tip({
+        ar: 'إنشاء الفروع ينفتح لك في رتبة ' + rank + '. في رتبة Intern تشتغل على `main` بس.',
+        en: 'Creating branches unlocks at the ' + rank + ' rank. As an Intern you work on `main` only.',
+      });
       return false;
     }
-    out.tip('إنشاء الفروع لسا ما انبنى في المحاكي.');
+    out.tip({ ar: 'إنشاء الفروع لسا ما انبنى في المحاكي.', en: 'Creating branches isn’t built into the simulator yet.' });
     return false;
   }
   const current = headBranch(L);
@@ -158,8 +182,11 @@ function gitCheckout(ctx: Ctx, args: string[]): boolean {
   const rank = ctx.lockedUntil('switch');
   ctx.out.tip(
     rank
-      ? 'التنقل بين الفروع ينفتح لك في رتبة ' + rank + '. لو تبي ترجع ملف لآخر نسخة استخدم `git restore <file>`.'
-      : 'التنقل بين الفروع لسا ما انبنى في المحاكي.',
+      ? {
+          ar: 'التنقل بين الفروع ينفتح لك في رتبة ' + rank + '. لو تبي ترجع ملف لآخر نسخة استخدم `git restore <file>`.',
+          en: 'Switching branches unlocks at the ' + rank + ' rank. To bring a file back to its last committed version, use `git restore <file>`.',
+        }
+      : { ar: 'التنقل بين الفروع لسا ما انبنى في المحاكي.', en: 'Switching branches isn’t built into the simulator yet.' },
   );
   return false;
 }

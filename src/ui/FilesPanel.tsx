@@ -1,22 +1,15 @@
 import { useState, type FormEvent, type KeyboardEvent } from 'react';
+import type { Bilingual } from '../engine';
 import { useGame } from './gameContext';
+import { useLang } from './lang';
+import { Md } from './Md';
 
-const LEGEND = (
-  <div className="legend">
-    <span>
-      <span className="badge modified">M</span> عدّلته وما جهّزته
-    </span>
-    <span>
-      <span className="badge staged">M</span> جاهز للـ commit
-    </span>
-    <span>
-      <span className="badge untracked">U</span> جديد
-    </span>
-    <span>
-      <span className="badge ignored">!</span> متجاهَل
-    </span>
-  </div>
-);
+const LEGEND: [kind: string, code: string, label: Bilingual][] = [
+  ['modified', 'M', { ar: 'عدّلته وما جهّزته', en: 'changed, not staged' }],
+  ['staged', 'M', { ar: 'جاهز للـ commit', en: 'staged' }],
+  ['untracked', 'U', { ar: 'جديد', en: 'new' }],
+  ['ignored', '!', { ar: 'متجاهَل', en: 'ignored' }],
+];
 
 /**
  * File list with git badges, and a plain editor. Saving writes to the working tree.
@@ -24,6 +17,7 @@ const LEGEND = (
  */
 export function FilesPanel() {
   const game = useGame();
+  const { t } = useLang();
   const local = game.session?.world.local;
   const files = game.files();
   const [open, setOpen] = useState<string | null>(null);
@@ -88,9 +82,14 @@ export function FilesPanel() {
   if (!local) {
     editor = (
       <div className="empty">
-        <strong>ما فيه ملفات للحين.</strong>
+        <strong>{t({ ar: 'ما فيه ملفات للحين.', en: 'No files yet.' })}</strong>
         <span>
-          المشروع عند الفريق، وأنت تحتاج نسخة منه. استخدم <code>git clone</code> في التيرمينال.
+          <Md
+            text={t({
+              ar: 'المشروع عند الفريق، وأنت تحتاج نسخة منه. استخدم `git clone` في التيرمينال.',
+              en: 'The project lives with the team, and you need a copy. Use `git clone` in the terminal.',
+            })}
+          />
         </span>
       </div>
     );
@@ -98,37 +97,43 @@ export function FilesPanel() {
     editor = (
       <>
         <div className="empty">
-          <span>اختر ملف من القائمة تعدّله، أو أنشئ ملف جديد.</span>
+          <span>{t({ ar: 'اختر ملف من القائمة تعدّله، أو أنشئ ملف جديد.', en: 'Pick a file from the list to edit it, or create a new one.' })}</span>
         </div>
         {creating ? (
           <form className="edfoot" id="newForm" onSubmit={create}>
             <input
               id="newName"
-              placeholder="مثل: .gitignore"
-              aria-label="اسم الملف الجديد"
+              placeholder={t({ ar: 'مثل: .gitignore', en: 'e.g. .gitignore' })}
+              aria-label={t({ ar: 'اسم الملف الجديد', en: 'New file name' })}
               dir="ltr"
               autoFocus
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
             />
             <button type="submit" className="btn primary">
-              إنشاء
+              {t({ ar: 'إنشاء', en: 'Create' })}
             </button>
             <button type="button" className="btn ghost" id="newCancel" onClick={stopCreating}>
-              إلغاء
+              {t({ ar: 'إلغاء', en: 'Cancel' })}
             </button>
             <span className="ederr" id="newError" hidden={!newError}>
-              اسم غير صالح: بدون مسافات أو مجلدات.
+              {t({ ar: 'اسم غير صالح: بدون مسافات أو مجلدات.', en: 'Invalid name: no spaces or folders.' })}
             </span>
           </form>
         ) : (
           <div className="edfoot">
             <button type="button" className="btn" id="newBtn" onClick={() => setCreating(true)}>
-              ملف جديد
+              {t({ ar: 'ملف جديد', en: 'New file' })}
             </button>
           </div>
         )}
-        {LEGEND}
+        <div className="legend">
+          {LEGEND.map(([kind, code, label]) => (
+            <span key={kind}>
+              <span className={'badge ' + kind}>{code}</span> {t(label)}
+            </span>
+          ))}
+        </div>
       </>
     );
   } else {
@@ -137,7 +142,7 @@ export function FilesPanel() {
         <div className="edhead">
           <span className="fname">{open}</span>
           <span className="dirty" id="edDirty" hidden={draft === null}>
-            تعديلات ما انحفظت
+            {t({ ar: 'تعديلات ما انحفظت', en: 'Unsaved changes' })}
           </span>
         </div>
         <textarea
@@ -145,7 +150,7 @@ export function FilesPanel() {
           id="edText"
           dir="auto"
           spellCheck={false}
-          aria-label="محتوى الملف"
+          aria-label={t({ ar: 'محتوى الملف', en: 'File contents' })}
           autoFocus={focusEditor}
           value={draft ?? game.readFile(open) ?? ''}
           onChange={(e) => setDraft(e.target.value)}
@@ -153,10 +158,10 @@ export function FilesPanel() {
         />
         <div className="edfoot">
           <button type="button" className="btn primary" id="edSave" onClick={save}>
-            حفظ
+            {t({ ar: 'حفظ', en: 'Save' })}
           </button>
           <button type="button" className="btn ghost" id="edClose" onClick={close}>
-            إغلاق
+            {t({ ar: 'إغلاق', en: 'Close' })}
           </button>
           <span className="edkey">Ctrl/⌘ + S</span>
         </div>
@@ -165,9 +170,9 @@ export function FilesPanel() {
   }
 
   return (
-    <section className="col col-files" aria-label="الملفات">
+    <section className="col col-files" aria-label={t({ ar: 'الملفات', en: 'Files' })}>
       <div className="col-head">
-        <h2>ملفات المشروع</h2>
+        <h2>{t({ ar: 'ملفات المشروع', en: 'Project files' })}</h2>
         <span className="mono" id="repoName">
           {local?.dir ?? ''}
         </span>
@@ -178,7 +183,7 @@ export function FilesPanel() {
             <button type="button" aria-current={open === f.path ? 'true' : undefined} onClick={() => pick(f.path)}>
               <span>{f.path}</span>
               {f.badge && (
-                <span className={'badge ' + f.badge.kind} title={f.badge.title}>
+                <span className={'badge ' + f.badge.kind} title={t(f.badge.title)}>
                   {f.badge.code}
                 </span>
               )}

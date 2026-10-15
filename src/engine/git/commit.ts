@@ -56,7 +56,10 @@ export function gitCommit(ctx: Ctx, args: string[]): boolean {
       out.print('Changes not staged for commit:');
       printEntries(out, st.unstaged, 'r');
       out.print('\nno changes added to commit (use "git add" and/or "git commit -a")');
-      out.tip('التعديلات موجودة بس ما جهّزتها. استخدم `git add` قبل `git commit`.');
+      out.tip({
+        ar: 'التعديلات موجودة بس ما جهّزتها. استخدم `git add` قبل `git commit`.',
+        en: 'You have changes, but none of them are staged. Use `git add` before `git commit`.',
+      });
     } else if (st.untracked.length) {
       out.print('Untracked files:');
       for (const p of st.untracked) out.line([['\t' + p, 'r']]);
@@ -71,7 +74,10 @@ export function gitCommit(ctx: Ctx, args: string[]): boolean {
   if (!message && amend) message = L.commits[head!]!.message;
   if (!message) {
     out.print('Aborting commit due to empty commit message.', 'r');
-    out.tip('اكتب الرسالة مع الأمر: `git commit -m "وصف التعديل"`');
+    out.tip({
+      ar: 'اكتب الرسالة مع الأمر: `git commit -m "وصف التعديل"`',
+      en: 'Write the message with the command: `git commit -m "Describe the change"`',
+    });
     return false;
   }
 
@@ -96,9 +102,10 @@ export function gitCommit(ctx: Ctx, args: string[]): boolean {
   }
 
   if (isWeakMessage(message)) {
-    out.tip(
-      'رسالة الـ commit قصيرة وما توضح وش تغيّر، والفريق بيقرأها بعدين. تقدر تصلحها قبل الـ push: `git commit --amend -m "رسالة أوضح"`',
-    );
+    out.tip({
+      ar: 'رسالة الـ commit قصيرة وما توضح وش تغيّر، والفريق بيقرأها بعدين. تقدر تصلحها قبل الـ push: `git commit --amend -m "رسالة أوضح"`',
+      en: 'That commit message is short and doesn’t say what changed, and the team will read it later. You can fix it before you push: `git commit --amend -m "A clearer message"`',
+    });
   }
   ctx.hooks.onCommit?.(c, changed, parentTree);
   return true;

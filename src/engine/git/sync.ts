@@ -39,17 +39,23 @@ export function gitClone(ctx: Ctx, args: string[]): boolean {
   if (normalizeUrl(url) !== normalizeUrl(world.remote.url)) {
     out.print("Cloning into '" + dir + "'...");
     out.print("remote: Repository not found.\nfatal: repository '" + url + "' not found", 'r');
-    out.tip('تأكد من الرابط. انسخه من رسالة أبو فهد بالضبط.');
+    out.tip({
+      ar: 'تأكد من الرابط. انسخه من رسالة أبو فهد بالضبط.',
+      en: 'Check the link. Copy it exactly from Abu Fahd’s message.',
+    });
     return false;
   }
   if (world.local) {
     out.print("fatal: destination path '" + world.local.dir + "' already exists and is not an empty directory.", 'r');
-    out.tip('المشروع عندك من قبل. ادخله بـ `cd ' + world.local.dir + '`');
+    out.tip({
+      ar: 'المشروع عندك من قبل. ادخله بـ `cd ' + world.local.dir + '`',
+      en: 'You already have the project. Go in with `cd ' + world.local.dir + '`',
+    });
     return false;
   }
   if (world.cwd !== '~') {
     out.print("fatal: could not create work tree dir '" + dir + "': Permission denied", 'r');
-    out.tip('ارجع لمجلد البداية بـ `cd ~` وبعدها استنسخ.');
+    out.tip({ ar: 'ارجع لمجلد البداية بـ `cd ~` وبعدها استنسخ.', en: 'Go back to your home folder with `cd ~`, then clone.' });
     return false;
   }
   if (!/^[\w.-]+$/.test(dir)) {
@@ -68,7 +74,10 @@ export function gitClone(ctx: Ctx, args: string[]): boolean {
       'Resolving deltas: 100% (4/4), done.',
   );
   world.local = cloneRepo(world.remote, dir);
-  out.tip('المشروع صار عندك في مجلد `' + dir + '`. ادخله بـ `cd ' + dir + '`');
+  out.tip({
+    ar: 'المشروع صار عندك في مجلد `' + dir + '`. ادخله بـ `cd ' + dir + '`',
+    en: 'The project is now in the `' + dir + '` folder. Go in with `cd ' + dir + '`',
+  });
   return true;
 }
 
@@ -173,7 +182,10 @@ export function gitPush(ctx: Ctx, args: string[]): boolean {
   if (force || lease) {
     const rank = ctx.lockedUntil('push --force');
     if (rank) {
-      out.tip('الـ force push يعيد كتابة تاريخ الفريق. تتعلم متى يكون آمن في رتبة ' + rank + '. الحين ادفع بدون `--force`.');
+      out.tip({
+        ar: 'الـ force push يعيد كتابة تاريخ الفريق. تتعلم متى يكون آمن في رتبة ' + rank + '. الحين ادفع بدون `--force`.',
+        en: 'A force push rewrites the team’s history. You’ll learn when it’s safe at the ' + rank + ' rank. For now, push without `--force`.',
+      });
       return false;
     }
   }
@@ -205,7 +217,10 @@ export function gitPush(ctx: Ctx, args: string[]): boolean {
           '    git push --set-upstream origin ' + current + '\n',
         'r',
       );
-      out.tip('أول مرة ترفع فرع جديد لازم تقول لـ git وين يروح: `git push -u origin ' + current + '`');
+      out.tip({
+        ar: 'أول مرة ترفع فرع جديد لازم تقول لـ git وين يروح: `git push -u origin ' + current + '`',
+        en: 'The first time you push a new branch, tell git where it goes: `git push -u origin ' + current + '`',
+      });
       return false;
     }
     dst = up ?? current;
@@ -217,7 +232,10 @@ export function gitPush(ctx: Ctx, args: string[]): boolean {
   if (remoteTip === localTip) {
     out.print('Everything up-to-date');
     if (!isClean(computeStatus(L))) {
-      out.tip('ما فيه commits جديدة ترفعها. التعديلات عندك ما تسجّلت للحين: `git add` ثم `git commit` قبل `git push`.');
+      out.tip({
+        ar: 'ما فيه commits جديدة ترفعها. التعديلات عندك ما تسجّلت للحين: `git add` ثم `git commit` قبل `git push`.',
+        en: 'There are no new commits to push. Your changes aren’t committed yet: `git add`, then `git commit`, before `git push`.',
+      });
     }
     return true;
   }
@@ -235,7 +253,10 @@ export function gitPush(ctx: Ctx, args: string[]): boolean {
     out.print('To ' + L.url);
     out.line([[' ! [remote rejected] ' + src + ' -> ' + dst + ' (protected branch hook declined)', 'r']]);
     out.print("error: failed to push some refs to '" + L.url + "'", 'r');
-    out.tip('الفرع `' + dst + '` محمي. اشتغل على فرع خاص فيك وافتح طلب دمج (PR).');
+    out.tip({
+      ar: 'الفرع `' + dst + '` محمي. اشتغل على فرع خاص فيك وافتح طلب دمج (PR).',
+      en: 'The `' + dst + '` branch is protected. Work on a branch of your own and open a pull request (PR).',
+    });
     return false;
   }
 
@@ -254,7 +275,10 @@ export function gitPush(ctx: Ctx, args: string[]): boolean {
           'hint: have locally. This is usually caused by another repository pushing to\n' +
           "hint: the same ref. If you want to integrate the remote changes, use\nhint: 'git pull' before pushing again.",
       );
-      out.tip('أحد من الفريق رفع شغل قبلك. اسحبه أول بـ `git pull` وبعدها ارفع.');
+      out.tip({
+        ar: 'أحد من الفريق رفع شغل قبلك. اسحبه أول بـ `git pull` وبعدها ارفع.',
+        en: 'Someone on the team pushed before you. Pull their work first with `git pull`, then push.',
+      });
       return false;
     } else {
       rejected(
@@ -264,9 +288,15 @@ export function gitPush(ctx: Ctx, args: string[]): boolean {
           "hint: use 'git pull' before pushing again.",
       );
       if (isAncestor(L.commits, localTip, remoteTip)) {
-        out.tip('فرعك متأخر عن نسخة الفريق. اسحب التحديثات بـ `git pull` قبل الرفع.');
+        out.tip({
+          ar: 'فرعك متأخر عن نسخة الفريق. اسحب التحديثات بـ `git pull` قبل الرفع.',
+          en: 'Your branch is behind the team’s copy. Get the updates with `git pull` before you push.',
+        });
       } else {
-        out.tip('تاريخك صار مختلف عن نسخة الفريق، غالباً لأنك عدّلت commit سبق ورفعته (مثلاً بـ `--amend`). في هذي المرحلة الأسهل تضغط «رجّع الوقت» وتعيد.');
+        out.tip({
+          ar: 'تاريخك صار مختلف عن نسخة الفريق، غالباً لأنك عدّلت commit سبق ورفعته (مثلاً بـ `--amend`). في هذي المرحلة الأسهل تضغط «رجّع الوقت» وتعيد.',
+          en: 'Your history no longer matches the team’s, usually because you changed a commit you had already pushed (with `--amend`, for example). At this stage the easiest fix is to press "Rewind" and start over.',
+        });
       }
       return false;
     }
@@ -305,7 +335,10 @@ export function gitRemote(ctx: Ctx, args: string[]): boolean {
   if (args.includes('-v') || args.includes('--verbose')) ctx.out.print('origin\t' + url + ' (fetch)\norigin\t' + url + ' (push)');
   else if (args[0] === 'get-url') ctx.out.print(url);
   else if (args.length && args[0] !== 'show') {
-    ctx.out.tip('إعدادات الـ remote جاهزة من الفريق، ما تحتاج تغيّرها.');
+    ctx.out.tip({
+      ar: 'إعدادات الـ remote جاهزة من الفريق، ما تحتاج تغيّرها.',
+      en: 'The team already set up the remote, so you don’t need to change it.',
+    });
     return false;
   } else ctx.out.print('origin');
   return true;

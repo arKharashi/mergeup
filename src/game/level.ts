@@ -1,13 +1,23 @@
-import type { Commit, LocalRepo, Person, RemoteRepo, Tree, World } from '../engine';
+import type { Bilingual, Commit, LocalRepo, Person, RemoteRepo, Tree, World } from '../engine';
 import type { RankId } from './ranks';
 import type { NpcId } from './team';
 
 export type Who = NpcId | 'system' | 'you';
 
+/** One answer to pick in the chat. */
+export interface Choice {
+  /** What `answer`, `right` and `wrong` compare. */
+  value: string;
+  label: Bilingual;
+}
+
+/** A choice that reads the same in both languages, such as a price. */
+export const same = (value: string): Choice => ({ value, label: { ar: value, en: value } });
+
 /** A multiple-choice question asked in the team chat. */
 export interface Question {
   id: string;
-  options: string[];
+  options: Choice[];
   answer: string;
   /** Runs once the player picks the right answer (e.g. ask the next question). */
   right?(api: LevelApi): void;
@@ -34,17 +44,17 @@ export interface LevelApi {
   readonly answers: Readonly<Record<string, string>>;
   /** Scratch space for the level. Set it up in `setup`. */
   readonly data: Record<string, unknown>;
-  say(who: Who, text: string, opts?: SayOptions): void;
+  say(who: Who, text: Bilingual, opts?: SayOptions): void;
   /** A coaching line in the terminal. */
-  tip(text: string): void;
-  rep(delta: number, reason: string): void;
+  tip(text: Bilingual): void;
+  rep(delta: number, reason: Bilingual): void;
   /** Ends the level as failed, with the reason shown to the player. */
-  fail(reason: string): void;
+  fail(reason: Bilingual): void;
 }
 
 export interface Objective {
-  /** Arabic. Backticks mark `code`. A function when it shows the player's data, such as their name. */
-  text: string | ((api: LevelApi) => string);
+  /** Backticks mark `code`. A function when it shows the player's data, such as their name. */
+  text: Bilingual | ((api: LevelApi) => Bilingual);
   done(api: LevelApi): boolean;
 }
 
@@ -64,17 +74,17 @@ export type SolutionStep = string | { answer: string; value: string } | { write:
 export interface Level {
   id: number;
   rank: RankId;
-  title: string;
+  title: Bilingual;
   /** One or two sentences under the title. */
-  summary: string;
+  summary: Bilingual;
   setup(player: Person): LevelStart;
   /** The opening chat messages. */
   intro(api: LevelApi): void;
   objectives: Objective[];
   /** Tier 1: a nudge. Tier 2: the commands. Tier 3: the full solution (costs a star). */
-  hints: [string, string, string | ((api: LevelApi) => string)];
-  /** The `help` cheat sheet: [command, Arabic description]. */
-  help: [string, string][];
+  hints: [Bilingual, Bilingual, Bilingual | ((api: LevelApi) => Bilingual)];
+  /** The `help` cheat sheet: [command, description]. */
+  help: [string, Bilingual][];
   onCommit?(api: LevelApi, commit: Commit, changed: string[], parentTree: Tree): void;
   /** Return 'handled' to skip the game's default reaction to a push. */
   onPush?(api: LevelApi, pushed: Commit[], branch: string): 'handled' | void;

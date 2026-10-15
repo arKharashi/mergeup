@@ -1,9 +1,10 @@
 import { useLayoutEffect, useRef } from 'react';
 import type { ChatMessage } from '../game/game';
-import { TEAM } from '../game/team';
+import { TEAM, npcName } from '../game/team';
 import { isPerson } from './chatPace';
 import { clockText } from './dom';
 import { useGame } from './gameContext';
+import { useLang, type Lang } from './lang';
 import { Md } from './Md';
 
 /**
@@ -12,6 +13,7 @@ import { Md } from './Md';
  */
 export function ChatPanel({ shown }: { shown: number }) {
   const game = useGame();
+  const { lang, t } = useLang();
   const s = game.session;
   const chat = s?.chat ?? [];
   const next = chat[shown];
@@ -27,9 +29,9 @@ export function ChatPanel({ shown }: { shown: number }) {
   return (
     <>
       <div className="col-head">
-        <h2>شات الفريق</h2>
+        <h2>{t({ ar: 'شات الفريق', en: 'Team chat' })}</h2>
         <span id="clock" className="mono">
-          {s ? clockText(shown ? chat[shown - 1]!.minute : 0) : ''}
+          {s ? clockText(shown ? chat[shown - 1]!.minute : 0, lang) : ''}
         </span>
       </div>
       <div className="chat" id="chat" aria-live="polite" ref={el}>
@@ -37,6 +39,7 @@ export function ChatPanel({ shown }: { shown: number }) {
           <Message
             key={m.seq}
             m={m}
+            lang={lang}
             player={game.player}
             answer={m.questionId ? answered[m.questionId] : undefined}
             playing={playing}
@@ -45,8 +48,8 @@ export function ChatPanel({ shown }: { shown: number }) {
         ))}
         {typing && (
           <div className="msg">
-            <div className="avatar">{TEAM[typing].mark}</div>
-            <div className="typing" aria-label="يكتب">
+            <div className="avatar">{t(TEAM[typing].mark)}</div>
+            <div className="typing" aria-label={t({ ar: 'يكتب', en: 'typing' })}>
               <i />
               <i />
               <i />
@@ -60,12 +63,14 @@ export function ChatPanel({ shown }: { shown: number }) {
 
 function Message({
   m,
+  lang,
   player,
   answer,
   playing,
   onAnswer,
 }: {
   m: ChatMessage;
+  lang: Lang;
   player: string;
   /** The player's correct answer to this message's question, once given. */
   answer: string | undefined;
@@ -76,13 +81,13 @@ function Message({
     return (
       <div className="msg sys">
         <span>
-          <Md text={m.text} />
+          <Md text={m.text[lang]} />
         </span>
       </div>
     );
   }
-  const name = m.who === 'you' ? player : TEAM[m.who].name;
-  const mark = m.who === 'you' ? player.trim().charAt(0) || 'أ' : TEAM[m.who].mark;
+  const name = m.who === 'you' ? player : npcName(m.who)[lang];
+  const mark = m.who === 'you' ? player.trim().charAt(0) || (lang === 'ar' ? 'أ' : 'Y') : TEAM[m.who].mark[lang];
   const questionId = m.questionId;
   return (
     <div className={m.alert ? 'msg alert' : 'msg'} data-who={m.who}>
@@ -90,11 +95,11 @@ function Message({
       <div>
         <div className="who">
           {name}
-          <time>{clockText(m.minute)}</time>
+          <time>{clockText(m.minute, lang)}</time>
         </div>
         <div className="text">
           <p>
-            <Md text={m.text} />
+            <Md text={m.text[lang]} />
           </p>
           {m.url && (
             <span className="url" dir="ltr">
@@ -106,13 +111,13 @@ function Message({
           <div className="opts">
             {m.options.map((o) => (
               <button
-                key={o}
+                key={o.value}
                 type="button"
-                className={answer === o ? 'right' : undefined}
+                className={answer === o.value ? 'right' : undefined}
                 disabled={!!answer || !playing}
-                onClick={() => onAnswer(questionId, o)}
+                onClick={() => onAnswer(questionId, o.value)}
               >
-                {o}
+                {o.label[lang]}
               </button>
             ))}
           </div>

@@ -8,23 +8,24 @@ import {
   runLine,
   GIT_SUBCOMMANDS,
   SHELL_COMMANDS,
+  type Bilingual,
   type Commit,
   type Ctx,
   type Out,
   type World,
 } from '../engine';
-import type { Level, LevelApi, Question, SayOptions, Who } from './level';
+import type { Choice, Level, LevelApi, Question, SayOptions, Who } from './level';
 import { clamp, saveProgress, type KeyValueStore, type Progress, loadProgress } from './progress';
 import { lockedUntil, rankOfLevel, type Rank } from './ranks';
 
 export interface ChatMessage {
   seq: number;
   who: Who;
-  text: string;
+  text: Bilingual;
   url?: string;
   alert?: boolean;
   questionId?: string;
-  options?: string[];
+  options?: Choice[];
   /** Minutes since 9:00 on the level's workday. */
   minute: number;
 }
@@ -51,15 +52,15 @@ export interface GameEvents {
   session: Session;
   chat: ChatMessage;
   change: undefined;
-  rep: { delta: number; reason: string; total: number };
+  rep: { delta: number; reason: Bilingual; total: number };
   complete: { session: Session; stars: number; promotedTo: Rank | null };
-  fail: { session: Session; reason: string };
+  fail: { session: Session; reason: Bilingual };
 }
 
 export type BadgeKind = 'staged' | 'modified' | 'untracked' | 'ignored';
 export interface FileEntry {
   path: string;
-  badge: { code: string; kind: BadgeKind; title: string } | null;
+  badge: { code: string; kind: BadgeKind; title: Bilingual } | null;
 }
 
 type Listener<T> = (payload: T) => void;
@@ -186,9 +187,18 @@ export class Game {
     this.save();
 
     this.out.clear();
-    this.out.print('bun-cafe · Level ' + n + ' · ' + level.title, 'd');
-    if (n === 1) this.out.tip('هذا تيرمينال اللعبة. اكتب الأوامر واضغط Enter، وابدأ بـ `help` لو تبي تشوف الأوامر.');
-    else if (world.local) this.out.tip('المشروع جاهز في `~/' + world.local.dir + '` وأنت داخله.');
+    this.out.line([['bun-cafe · Level ' + n + ' · ', 'd'], [level.title, 'd']]);
+    if (n === 1) {
+      this.out.tip({
+        ar: 'هذا تيرمينال اللعبة. اكتب الأوامر واضغط Enter، وابدأ بـ `help` لو تبي تشوف الأوامر.',
+        en: 'This is the game’s terminal. Type a command and press Enter. Start with `help` to see the commands.',
+      });
+    } else if (world.local) {
+      this.out.tip({
+        ar: 'المشروع جاهز في `~/' + world.local.dir + '` وأنت داخله.',
+        en: 'The project is ready in `~/' + world.local.dir + '` and you’re inside it.',
+      });
+    }
     this.out.print('');
 
     this.emit('session', s);
@@ -211,8 +221,9 @@ export class Game {
     };
   }
 
-  private say(s: Session, who: Who, text: string, opts: SayOptions = {}): void {
-    if (who !== 'system' && who !== 'you') s.minute += 1 + Math.floor(text.length / 90);
+  private say(s: Session, who: Who, text: Bilingual, opts: SayOptions = {}): void {
+    // The Arabic length sets the clock, so the workday reads the same in both languages.
+    if (who !== 'system' && who !== 'you') s.minute += 1 + Math.floor(text.ar.length / 90);
     const msg: ChatMessage = { seq: ++this.seq, who, text, minute: s.minute };
     if (opts.url) msg.url = opts.url;
     if (opts.alert) msg.alert = true;
@@ -225,23 +236,25 @@ export class Game {
     this.emit('chat', msg);
   }
 
-  private rep(s: Session, delta: number, reason: string): void {
+  private rep(s: Session, delta: number, reason: Bilingual): void {
     const before = this.progress.rep;
     this.progress.rep = clamp(before + delta, 0, 100);
     if (delta < 0) s.repLost = true;
     this.save();
     this.emit('rep', { delta, reason, total: this.progress.rep });
     if (before >= LOW_REP && this.progress.rep < LOW_REP) {
-      this.say(
-        s,
-        'abufahd',
-        'تعال مكتبي دقيقة يا ' + this.progress.name + '. الأخطاء بدأت تتكرر وسمعتك عند الفريق نزلت. ' +
+      this.say(s, 'abufahd', {
+        ar:
+          'تعال مكتبي دقيقة يا ' + this.progress.name + '. الأخطاء بدأت تتكرر وسمعتك عند الفريق نزلت. ' +
           'اقرأ تلميحات المهمة، ولو احتجت ابدأ المستوى من جديد بـ «رجّع الوقت». كلنا غلطنا في بدايتنا.',
-      );
+        en:
+          'Come to my office for a minute, ' + this.progress.name + '. The mistakes are adding up and the team’s trust in you has dropped. ' +
+          'Read the task hints, and if you need to, start the level over with "Rewind". We all made mistakes when we started.',
+      });
     }
   }
 
-  private fail(s: Session, reason: string): void {
+  private fail(s: Session, reason: Bilingual): void {
     if (s.status !== 'playing') return;
     s.status = 'failed';
     this.emit('fail', { session: s, reason });
@@ -275,17 +288,19 @@ export class Game {
     if (s.status !== 'playing') return;
     const weak = pushed.filter((c) => isWeakMessage(c.message));
     if (weak.length) {
-      this.rep(s, -Math.min(10, 5 * weak.length), 'رسالة commit غير واضحة');
+      this.rep(s, -Math.min(10, 5 * weak.length), { ar: 'رسالة commit غير واضحة', en: 'Unclear commit message' });
       const m = weak[0]!.message.split('\n')[0];
-      this.say(
-        s,
-        'abufahd',
-        'شفت شغلك، شكراً. بس رسالة الـ commit `' + m + '` ما توضح وش تغيّر، وبعد شهر محد بيتذكر. ' +
+      this.say(s, 'abufahd', {
+        ar:
+          'شفت شغلك، شكراً. بس رسالة الـ commit `' + m + '` ما توضح وش تغيّر، وبعد شهر محد بيتذكر. ' +
           'اكتب وش سويت بالضبط، مثل: `Add karak tea to the menu`',
-      );
+        en:
+          'I saw your work, thanks. But the commit message `' + m + '` doesn’t say what changed, and in a month nobody will remember. ' +
+          'Write exactly what you did, like: `Add karak tea to the menu`',
+      });
     } else if (pushed.length && !s.pushRewarded) {
       s.pushRewarded = true;
-      this.rep(s, 3, 'رفعت شغل برسائل واضحة');
+      this.rep(s, 3, { ar: 'رفعت شغل برسائل واضحة', en: 'Pushed work with clear messages' });
     }
   }
 
@@ -294,12 +309,12 @@ export class Game {
     const q = s?.questions[questionId];
     if (!s || !q || s.answers[questionId] || s.status !== 'playing') return;
     const api = this.api(s);
-    this.say(s, 'you', value);
+    this.say(s, 'you', q.options.find((o) => o.value === value)?.label ?? { ar: value, en: value });
     if (value === q.answer) {
       s.answers[questionId] = value;
       q.right?.(api);
     } else {
-      this.rep(s, -2, 'إجابة غلط في الشات');
+      this.rep(s, -2, { ar: 'إجابة غلط في الشات', en: 'Wrong answer in the chat' });
       q.wrong?.(api, value);
     }
     this.check(s);
@@ -314,14 +329,14 @@ export class Game {
     this.emit('change', undefined);
   }
 
-  hints(): string[] {
+  hints(): Bilingual[] {
     const s = this.session;
     if (!s) return [];
     const api = this.api(s);
     return s.level.hints.slice(0, s.hintTier).map((h) => (typeof h === 'function' ? h(api) : h));
   }
 
-  objectives(): { text: string; done: boolean }[] {
+  objectives(): { text: Bilingual; done: boolean }[] {
     const s = this.session;
     if (!s) return [];
     const api = this.api(s);
@@ -356,12 +371,12 @@ export class Game {
       .map((path): FileEntry => {
         if (!(path in L.index)) {
           return isIgnored(path, L.work['.gitignore'])
-            ? { path, badge: { code: '!', kind: 'ignored', title: 'متجاهَل في .gitignore' } }
-            : { path, badge: { code: 'U', kind: 'untracked', title: 'ملف جديد ما يعرفه git' } };
+            ? { path, badge: { code: '!', kind: 'ignored', title: { ar: 'متجاهَل في .gitignore', en: 'Ignored by .gitignore' } } }
+            : { path, badge: { code: 'U', kind: 'untracked', title: { ar: 'ملف جديد ما يعرفه git', en: 'New file git doesn’t know yet' } } };
         }
-        if (L.work[path] !== L.index[path]) return { path, badge: { code: 'M', kind: 'modified', title: 'تعديل ما جهّزته' } };
+        if (L.work[path] !== L.index[path]) return { path, badge: { code: 'M', kind: 'modified', title: { ar: 'تعديل ما جهّزته', en: 'Changed, not staged' } } };
         if (L.index[path] !== head[path]) {
-          return { path, badge: { code: path in head ? 'M' : 'A', kind: 'staged', title: 'جاهز للـ commit' } };
+          return { path, badge: { code: path in head ? 'M' : 'A', kind: 'staged', title: { ar: 'جاهز للـ commit', en: 'Staged for commit' } } };
         }
         return { path, badge: null };
       });

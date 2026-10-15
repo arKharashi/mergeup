@@ -1,8 +1,8 @@
-import type { Out, Segment, Tone } from '../engine';
+import type { Bilingual, Out, Segment, Tone } from '../engine';
 
 export type TermLine =
   | { id: number; kind: 'out'; segments: readonly Segment[] }
-  | { id: number; kind: 'tip'; text: string };
+  | { id: number; kind: 'tip'; text: Bilingual };
 
 /**
  * Everything the terminal shows. The engine writes to it as its `Out`,
@@ -22,7 +22,7 @@ export class TerminalBuffer implements Out {
     for (const l of text.split('\n')) this.line([[l, tone]]);
   }
 
-  tip(text: string): void {
+  tip(text: Bilingual): void {
     this.set([...this.lines, { id: ++this.nextId, kind: 'tip', text }]);
   }
 
