@@ -1,17 +1,17 @@
-# Git Together
+# MergeUp
 
 **Learn git the way teams use it: by joining one.**
 A free browser game, in Arabic and English.
 
-### [▶ Play it in your browser](https://arkharashi.github.io/git-together/) · [اقرأ بالعربي](README.ar.md)
+### [▶ Play it in your browser](https://arkharashi.github.io/mergeup/) · [اقرأ بالعربي](README.ar.md)
 
-[![Build and deploy](https://github.com/arKharashi/git-together/actions/workflows/deploy.yml/badge.svg)](https://github.com/arKharashi/git-together/actions/workflows/deploy.yml)
+[![Build and deploy](https://github.com/arKharashi/mergeup/actions/workflows/deploy.yml/badge.svg)](https://github.com/arKharashi/mergeup/actions/workflows/deploy.yml)
 [![MIT license](https://img.shields.io/badge/license-MIT-2ea043)](LICENSE)
 ![React 19](https://img.shields.io/badge/React-19-149eca?logo=react&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6?logo=typescript&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-8-646cff?logo=vite&logoColor=white)
 
-![Git Together on a desktop: the task and team chat on the left, the terminal in the middle, the project's files on the right](docs/screenshots/desktop-en.png)
+![MergeUp on a desktop: the task and team chat on the left, the terminal in the middle, the project's files on the right](docs/screenshots/desktop-en.png)
 
 You're the new hire on the team that builds the website of Bun, a Saudi specialty coffee shop. Your team lead and teammates are scripted characters: they hand you tasks, quiz you in the team chat and react to what you do. The terminal behaves like real git, and a mistake costs reputation instead of ending the game.
 

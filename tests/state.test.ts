@@ -69,7 +69,7 @@ describe('TerminalBuffer', () => {
   });
 });
 
-describe('progress saved before the rename', () => {
+describe('progress saved under the earlier names', () => {
   it('loads from the Zumala Git key and saves under the new one', () => {
     const store = memoryStore();
     store.set('zumala-git:progress:v1', JSON.stringify({ v: 1, name: 'Reem', rep: 61, stars: { 1: 3 }, unlocked: 2, level: 2 }));
@@ -79,5 +79,15 @@ describe('progress saved before the rename', () => {
     saveProgress(store, p);
     expect(JSON.parse(store.get(STORAGE_KEY)!).rep).toBe(64);
     expect(loadProgress(store).rep).toBe(64);
+  });
+
+  it('prefers the newest key: MergeUp, then Git Together, then Zumala Git', () => {
+    const store = memoryStore();
+    const saved = (name: string) => JSON.stringify({ v: 1, name, rep: 50, stars: {}, unlocked: 1, level: 1 });
+    store.set('zumala-git:progress:v1', saved('old'));
+    store.set('git-together:progress:v1', saved('newer'));
+    expect(loadProgress(store).name).toBe('newer');
+    store.set(STORAGE_KEY, saved('newest'));
+    expect(loadProgress(store).name).toBe('newest');
   });
 });

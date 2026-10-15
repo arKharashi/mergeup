@@ -1,9 +1,9 @@
 ---
-description: Build a level of Git Together from its scenario in docs/design.md
+description: Build a level of MergeUp from its scenario in docs/design.md
 argument-hint: <level number>
 ---
 
-Build level $ARGUMENTS of Git Together.
+Build level $ARGUMENTS of MergeUp.
 
 1. Read `CLAUDE.md`, then the scenario for level $ARGUMENTS in `docs/design.md`, and the existing levels in `src/levels/` for style.
 2. List what the scenario needs from the engine (commands, flags, NPC actions, UI such as a PR page).

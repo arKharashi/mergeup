@@ -45,7 +45,7 @@ export function Header({ onPickLevel }: { onPickLevel: (n: number) => void }) {
     <header className="top">
       <div className="brand">
         <h1 dir="ltr">
-          <b>Git</b> Together
+          Merge<b>Up</b>
         </h1>
         <small>{t({ ar: 'مكتبك الافتراضي في فريق بُن', en: 'Your virtual desk on the Bun team' })}</small>
       </div>

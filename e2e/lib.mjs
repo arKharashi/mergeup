@@ -3,7 +3,7 @@ import { mkdirSync } from 'node:fs';
 import { chromium, firefox, webkit } from 'playwright-core';
 
 export const REPO = 'https://repo.bun.local/team/bun-cafe.git';
-export const KEYS = { progress: 'git-together:progress:v1', lang: 'git-together:lang' };
+export const KEYS = { progress: 'mergeup:progress:v1', lang: 'mergeup:lang' };
 const SHOTS = new URL('./shots/', import.meta.url).pathname;
 
 /** Collects checks; a failed check is reported, not thrown, so one run shows every problem. */

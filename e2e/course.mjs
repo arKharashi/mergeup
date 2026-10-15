@@ -14,7 +14,7 @@ export async function course(browser, lang, engine) {
   if (lang === 'ar') await page.click('#overlay .langbtn');
   r.check((await page.getAttribute('html', 'lang')) === lang, 'html lang is ' + lang);
   r.check((await page.getAttribute('html', 'dir')) === L('rtl', 'ltr'), 'html dir follows the language');
-  r.check((await page.title()) === 'Git Together', 'page title');
+  r.check((await page.title()) === 'MergeUp', 'page title');
   r.check((await page.getAttribute('.app', 'inert')) !== null, 'office is inert behind the welcome card');
   await page.keyboard.press('Escape');
   r.check(await page.isVisible('#overlay .card'), 'Escape does not dismiss the welcome card');
