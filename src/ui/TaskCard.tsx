@@ -5,10 +5,11 @@ import { useLang } from './lang';
 import { Md } from './Md';
 
 /**
- * The task card: level title, objectives checklist and hints.
+ * The task card: level title, objectives checklist and hints. Once the level is over it says so,
+ * because the result card can be closed and a failed level can't be finished any more.
  * Give it key={session id}: an objective's box pops when it gets done after the card appeared.
  */
-export function TaskCard() {
+export function TaskCard({ onRewind, onNext }: { onRewind: () => void; onNext: (() => void) | null }) {
   const game = useGame();
   const { t } = useLang();
   const objectives = game.objectives();
@@ -33,6 +34,28 @@ export function TaskCard() {
           </li>
         ))}
       </ul>
+      {s.status === 'failed' && (
+        <div className="task-status failed" role="status">
+          <p>{t({ ar: 'المستوى ما نجح، وما يكتمل بعد كذا. «رجّع الوقت» يعيده من بدايته.', en: 'This level failed and can’t be finished now. Rewind to start it over.' })}</p>
+          <button type="button" className="btn" onClick={onRewind}>
+            {t({ ar: 'رجّع الوقت', en: 'Rewind' })}
+          </button>
+        </div>
+      )}
+      {s.status === 'done' && (
+        <div className="task-status done" role="status">
+          <p>
+            {onNext
+              ? t({ ar: 'خلّصت المستوى.', en: 'Level complete.' })
+              : t({ ar: 'خلّصت المستوى. المستويات الجاية قيد البناء.', en: 'Level complete. More levels are on the way.' })}
+          </p>
+          {onNext && (
+            <button type="button" className="btn primary" onClick={onNext}>
+              {t({ ar: 'المستوى التالي', en: 'Next level' })}
+            </button>
+          )}
+        </div>
+      )}
       {hints.length > 0 && (
         <div className="hint">
           {hints.map((h, i) => (
@@ -45,7 +68,7 @@ export function TaskCard() {
           ))}
         </div>
       )}
-      <div className="hintrow">
+      <div className="hintrow" hidden={s.status !== 'playing'}>
         {s.hintTier < 2 && (
           <button type="button" className="btn" id="hintBtn" onClick={() => game.revealHint()}>
             {t({ ar: 'تلميح (' + s.hintTier + '/3)', en: 'Hint (' + s.hintTier + '/3)' })}

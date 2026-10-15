@@ -100,6 +100,7 @@ export function App({ terminal }: { terminal: TerminalBuffer }) {
 
   // Panels with per-level state start fresh when a level loads.
   const sid = session?.id ?? 0;
+  const next = session && game.isBuilt(session.level.id + 1) ? session.level.id + 1 : null;
   return (
     <>
       <div className="app">
@@ -107,7 +108,7 @@ export function App({ terminal }: { terminal: TerminalBuffer }) {
         <Tabs current={view.pane} dots={dots} onShow={showPane} />
         <main className="desk" id="desk" data-pane={view.pane}>
           <section className="col col-team" aria-label={t({ ar: 'المهمة والفريق', en: 'Task and team' })}>
-            <TaskCard key={sid} />
+            <TaskCard key={sid} onRewind={rewind} onNext={next ? () => load(next) : null} />
             <ChatPanel shown={shown} />
           </section>
           <Terminal ref={term} buffer={terminal} onRewind={rewind} />

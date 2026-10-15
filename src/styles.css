@@ -251,6 +251,10 @@ code, .mono { font-family: var(--f-mono); }
 }
 .hint p { margin: 0; }
 .hint .tier { font-family: var(--f-mono); font-size: 0.7rem; color: var(--accent); }
+.task-status { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; border-radius: 8px; padding: 8px 10px; font-size: 0.85rem; }
+.task-status p { margin: 0; }
+.task-status.done { background: var(--good-soft); }
+.task-status.failed { background: var(--bad-soft); }
 
 /* Chat */
 .chat { flex: 1; min-height: 0; overflow-y: auto; padding: 14px 14px 18px; display: flex; flex-direction: column; gap: 12px; }
