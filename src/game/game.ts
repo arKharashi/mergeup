@@ -325,7 +325,7 @@ export class Game {
     const s = this.session;
     if (!s) return [];
     const api = this.api(s);
-    return s.level.objectives.map((o) => ({ text: o.text, done: o.done(api) }));
+    return s.level.objectives.map((o) => ({ text: typeof o.text === 'function' ? o.text(api) : o.text, done: o.done(api) }));
   }
 
   private check(s: Session): void {

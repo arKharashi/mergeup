@@ -1,6 +1,6 @@
 import { headTree } from '../engine';
 import type { Level } from '../game/level';
-import { REPO_URL, bunCafeHistory, hasPlayerLine } from './fixtures';
+import { REPO_URL, bunCafeHistory, hasPlayerLine, newLines } from './fixtures';
 
 /**
  * Level 1 (Intern): the first day.
@@ -27,7 +27,7 @@ export const level01: Level = {
   objectives: [
     { text: 'استنسخ المشروع بـ `git clone`', done: (api) => !!api.world.local },
     {
-      text: 'أضف اسمك تحت «الفريق» في `README.md`',
+      text: (api) => 'أضف اسمك (' + api.player + ') تحت «الفريق» في `README.md`',
       done: (api) => hasPlayerLine(api.world.local?.work['README.md'], api.player),
     },
     {
@@ -63,6 +63,19 @@ export const level01: Level = {
     ['git commit -m "..."', 'يسجّل التعديلات برسالة'],
     ['git push', 'يرفع الـ commits للفريق'],
   ],
+
+  // A line was added, but without the name the player signed up with ("عبدالرحمن" vs "Abdulrahman").
+  onPush(api) {
+    const r = api.world.remote;
+    const readme = r.commits[r.branches.main!]?.tree['README.md'];
+    if (newLines(readme).length && !hasPlayerLine(readme, api.player)) {
+      api.say(
+        'abufahd',
+        'وصلني تعديلك، بس ما لقيت اسمك في السطر الجديد. اسمك عندنا «' + api.player + '». ' +
+          'عدّل السطر في `README.md` واكتبه مثل ما هو، وبعدها سجّل التعديل وارفعه من جديد.',
+      );
+    }
+  },
 
   onComplete(api) {
     api.say('abufahd', 'وصلني تعديلك وشفت اسمك في القائمة. رسمياً صرت من الفريق يا ' + api.player + '!');

@@ -50,6 +50,34 @@ describe('level 1: first day', () => {
     expect(game.session!.status).toBe('done');
   });
 
+  it('finds the name however it is spaced, spelled or cased, or by one word of it', () => {
+    const cases: [name: string, line: string][] = [
+      ['عبدالرحمن', '- عبد الرحمن - متدرب intern'],
+      ['عبد الرحمن', '- عبدالرحمن — متدرب'],
+      ['أحمد', '- احمد — متدرب'],
+      ['Abdulrahman', '- abdulrahman, intern'],
+      ['ريم العتيبي', '- ريم — متدرب'],
+    ];
+    for (const [name, line] of cases) {
+      const { game } = makeGame(name);
+      game.loadLevel(1);
+      play(game, ['git clone ' + REPO_URL, 'cd bun-cafe', 'echo "' + line + '" >> README.md']);
+      expect(game.objectives()[1]!.done, name + ' in ' + line).toBe(true);
+    }
+  });
+
+  it('shows the expected name, and says so when a pushed line has another one', () => {
+    const { game } = makeGame('Abdulrahman');
+    game.loadLevel(1);
+    expect(game.objectives()[1]!.text).toContain('(Abdulrahman)');
+    play(game, ['git clone ' + REPO_URL, 'cd bun-cafe', 'echo "- عبدالرحمن — متدرب" >> README.md']);
+    play(game, ['git add .', 'git commit -m "Add my name to the team list"', 'git push']);
+    expect(game.objectives()[4]!.done).toBe(false);
+    expect(game.session!.chat.some((m) => m.who === 'abufahd' && m.text.includes('«Abdulrahman»'))).toBe(true);
+    play(game, ['echo "- Abdulrahman — Intern" >> README.md', 'git add .', 'git commit -m "Write my name as I signed up"', 'git push']);
+    expect(game.session!.status).toBe('done');
+  });
+
   it('costs reputation and a star when the commit message is weak', () => {
     const { game } = makeGame();
     let stars = 0;

@@ -43,8 +43,8 @@ export interface LevelApi {
 }
 
 export interface Objective {
-  /** Arabic. Backticks mark `code`. */
-  text: string;
+  /** Arabic. Backticks mark `code`. A function when it shows the player's data, such as their name. */
+  text: string | ((api: LevelApi) => string);
   done(api: LevelApi): boolean;
 }
 

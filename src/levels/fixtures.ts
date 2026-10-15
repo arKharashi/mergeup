@@ -61,9 +61,30 @@ export function bunCafeHistory(player: Person | null): RemoteRepo {
   return buildRemote(REPO_URL, steps);
 }
 
-/** True when `content` has a line with the player's name that wasn't in the team list before. */
-export function hasPlayerLine(content: string | undefined, name: string): boolean {
-  if (!content || !name) return false;
+/**
+ * One spelling for the common ways of writing a name: case, spaces, tatweel, tashkeel,
+ * and the forms of alef, ya and ta marbuta. "عبد الرحمن" and "عبدالرحمن" fold the same.
+ */
+const fold = (s: string): string =>
+  s
+    .toLowerCase()
+    .replace(/[\s\u0640\u064B-\u065F\u0670\u200B-\u200F]/g, '')
+    .replace(/[أإآٱ]/g, 'ا')
+    .replace(/ى/g, 'ي')
+    .replace(/ة/g, 'ه');
+
+/** Non-empty lines of the README that weren't in the team list before. */
+export function newLines(content: string | undefined): string[] {
   const before = new Set(lines(README_V2));
-  return lines(content).some((l) => l.includes(name) && !before.has(l));
+  return lines(content ?? '').filter((l) => l.trim() && !before.has(l));
+}
+
+/**
+ * True when `content` has a new line with the player's name: the whole name, or one word of it
+ * with 3+ letters, so "ريم العتيبي" can write just "ريم".
+ */
+export function hasPlayerLine(content: string | undefined, name: string): boolean {
+  if (!content || !fold(name)) return false;
+  const words = [fold(name), ...name.split(/\s+/).map(fold).filter((w) => w.length >= 3)];
+  return newLines(content).some((l) => words.some((w) => fold(l).includes(w)));
 }
