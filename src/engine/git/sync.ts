@@ -1,4 +1,4 @@
-import type { Ctx } from '../context';
+import type { Ctx, PushRejection } from '../context';
 import { treeDiff } from '../diff';
 import { short } from '../hash';
 import { cloneRepo, computeStatus, headBranch, headId, headTree, isAncestor, isClean, setHead } from '../repo';
@@ -190,15 +190,17 @@ export function gitPush(ctx: Ctx, args: string[]): boolean {
     }
   }
 
-  // Which local branch goes to which remote branch.
+  // Which local branch goes to which remote branch. `label` is the source as typed, e.g. HEAD.
   const current = headBranch(L);
   let src: string;
   let dst: string;
+  let label: string;
   const spec = positional[1];
   if (spec) {
     const [a, b] = spec.split(':');
     src = a === 'HEAD' ? (current ?? '') : a!;
     dst = b || src;
+    label = a || src;
     if (!src || !(src in L.branches)) {
       out.print('error: src refspec ' + (a ?? spec) + " does not match any\nerror: failed to push some refs to '" + L.url + "'", 'r');
       return false;
@@ -208,13 +210,16 @@ export function gitPush(ctx: Ctx, args: string[]): boolean {
       out.print('fatal: You are not currently on a branch.', 'r');
       return false;
     }
-    src = current;
+    src = label = current;
     const up = L.upstream[current];
-    if (!up && !setUpstream) {
+    // push.default=simple: without a refspec, -u doesn't help a branch with no upstream yet.
+    if (!up) {
       out.print(
         'fatal: The current branch ' + current + ' has no upstream branch.\n' +
           'To push the current branch and set the remote as upstream, use\n\n' +
-          '    git push --set-upstream origin ' + current + '\n',
+          '    git push --set-upstream origin ' + current + '\n\n' +
+          'To have this happen automatically for branches without a tracking\n' +
+          "upstream, see 'push.autoSetupRemote' in 'git help config'.\n",
         'r',
       );
       out.tip({
@@ -223,13 +228,32 @@ export function gitPush(ctx: Ctx, args: string[]): boolean {
       });
       return false;
     }
-    dst = up ?? current;
+    if (up !== current) {
+      out.print(
+        'fatal: The upstream branch of your current branch does not match\n' +
+          'the name of your current branch.  To push to the upstream branch\n' +
+          'on the remote, use\n\n    git push origin HEAD:' + up + '\n\n' +
+          'To push to the branch of the same name on the remote, use\n\n    git push origin HEAD\n\n' +
+          "To choose either option permanently, see push.default in 'git help config'.\n\n" +
+          'To avoid automatically configuring an upstream branch when its name\n' +
+          "won't match the local branch, see option 'simple' of branch.autoSetupMerge\nin 'git help config'.\n",
+        'r',
+      );
+      return false;
+    }
+    dst = up;
   }
 
   const localTip = L.branches[src]!;
   const remoteTip = remote.branches[dst];
+  const track = () => {
+    if (!setUpstream || L.upstream[src] === dst) return;
+    L.upstream[src] = dst;
+    out.print("branch '" + src + "' set up to track 'origin/" + dst + "'.");
+  };
 
   if (remoteTip === localTip) {
+    track();
     out.print('Everything up-to-date');
     if (!isClean(computeStatus(L))) {
       out.tip({
@@ -240,23 +264,25 @@ export function gitPush(ctx: Ctx, args: string[]): boolean {
     return true;
   }
 
-  const rejected = (reason: string, hint?: string) => {
+  const rejected = (reason: Exclude<PushRejection, 'protected'>, hint?: string) => {
     out.print('To ' + L.url);
-    out.line([[' ! [rejected]        ' + src + ' -> ' + dst + ' (' + reason + ')', 'r']]);
+    out.line([[' ! [rejected]        ' + label + ' -> ' + dst + ' (' + reason + ')', 'r']]);
     out.print("error: failed to push some refs to '" + L.url + "'", 'r');
     if (hint) out.print(hint, 'y');
+    ctx.hooks.onPushRejected?.(dst, reason);
     return false;
   };
 
   if (remote.protectedBranches.includes(dst)) {
     out.print('remote: error: Changes to ' + dst + ' must be made through a pull request.');
     out.print('To ' + L.url);
-    out.line([[' ! [remote rejected] ' + src + ' -> ' + dst + ' (protected branch hook declined)', 'r']]);
+    out.line([[' ! [remote rejected] ' + label + ' -> ' + dst + ' (protected branch hook declined)', 'r']]);
     out.print("error: failed to push some refs to '" + L.url + "'", 'r');
     out.tip({
       ar: 'الفرع `' + dst + '` محمي. اشتغل على فرع خاص فيك وافتح طلب دمج (PR).',
       en: 'The `' + dst + '` branch is protected. Work on a branch of your own and open a pull request (PR).',
     });
+    ctx.hooks.onPushRejected?.(dst, 'protected');
     return false;
   }
 
@@ -317,13 +343,10 @@ export function gitPush(ctx: Ctx, args: string[]): boolean {
       'Total ' + objs + ' (delta 1), reused 0 (delta 0), pack-reused 0',
   );
   out.print('To ' + L.url);
-  if (!remoteTip) out.print(' * [new branch]      ' + src + ' -> ' + dst);
-  else if (forced) out.print(' + ' + short(remoteTip) + '...' + short(localTip) + ' ' + src + ' -> ' + dst + ' (forced update)');
-  else out.print('   ' + short(remoteTip) + '..' + short(localTip) + '  ' + src + ' -> ' + dst);
-  if (setUpstream && L.upstream[src] !== dst) {
-    L.upstream[src] = dst;
-    out.print("branch '" + src + "' set up to track 'origin/" + dst + "'.");
-  }
+  if (!remoteTip) out.print(' * [new branch]      ' + label + ' -> ' + dst);
+  else if (forced) out.print(' + ' + short(remoteTip) + '...' + short(localTip) + ' ' + label + ' -> ' + dst + ' (forced update)');
+  else out.print('   ' + short(remoteTip) + '..' + short(localTip) + '  ' + label + ' -> ' + dst);
+  track();
   ctx.hooks.onPush?.(fresh, dst);
   return true;
 }

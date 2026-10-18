@@ -46,6 +46,8 @@ export interface LocalRepo {
   remoteHead: string;
   /** Local branch -> the remote branch it tracks. */
   upstream: Record<string, string>;
+  /** The branch HEAD was on before the last switch, for `git switch -`. */
+  previous?: string;
   /** The staging area. */
   index: Tree;
   /** Files on disk. */

@@ -36,7 +36,8 @@ In dev, the console exposes the game: `__game.loadLevel(3)`, `__game.run('git lo
 src/
   engine/    Pure git + shell simulator. No DOM, no game rules. Deterministic and unit-tested.
     git/     One file per command group: sync (clone/fetch/pull/push/remote), stage (add/restore/rm/reset),
-             commit, history (log/show/diff), status, refs (rev parsing, decorations), format (dates, diffs, stats).
+             commit, history (log/show/diff), status, branch (branch/switch/checkout), refs (rev parsing,
+             decorations), format (dates, diffs, stats).
     shell.ts Tokenizer (quotes, &&, ;, >, >>) and shell builtins (ls, cd, cat, echo, touch, rm, help...).
   game/      Game class (sessions, objectives, reputation, stars, chat, files), Level types, ranks, NPC team, progress.
   levels/    One file per level, plus fixtures.ts: the bun-cafe project and its scripted history.

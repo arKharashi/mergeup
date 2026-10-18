@@ -1,5 +1,6 @@
 import type { Ctx } from '../context';
-import { headBranch, inRepo } from '../repo';
+import { inRepo } from '../repo';
+import { gitBranch, gitCheckout, gitSwitch } from './branch';
 import { gitCommit } from './commit';
 import { gitDiff, gitLog, gitShow } from './history';
 import { gitAdd, gitReset, gitRestore, gitRm } from './stage';
@@ -24,15 +25,19 @@ const IN_REPO: Record<string, GitCommand> = {
   rm: gitRm,
   remote: gitRemote,
   branch: gitBranch,
+  switch: gitSwitch,
   checkout: gitCheckout,
 };
 
 /** Real git commands the game knows about but the engine doesn't simulate yet. */
-const NOT_YET = ['switch', 'merge', 'stash', 'revert', 'cherry-pick', 'rebase', 'tag', 'reflog', 'bisect', 'blame', 'mv', 'clean'];
+const NOT_YET = ['merge', 'stash', 'revert', 'cherry-pick', 'rebase', 'tag', 'reflog', 'bisect', 'blame', 'mv', 'clean'];
 
 const ALL = ['clone', 'init', 'config', 'help', 'version', ...Object.keys(IN_REPO), ...NOT_YET];
 
-export const GIT_SUBCOMMANDS = ['clone', 'status', 'add', 'commit', 'push', 'pull', 'fetch', 'log', 'show', 'diff', 'restore', 'reset', 'rm', 'remote', 'config'];
+export const GIT_SUBCOMMANDS = [
+  'clone', 'status', 'add', 'commit', 'push', 'pull', 'fetch', 'log', 'show', 'diff', 'restore', 'reset', 'rm', 'remote', 'config',
+  'branch', 'switch', 'checkout',
+];
 
 function printUsage(ctx: Ctx): void {
   ctx.out.print('usage: git <command> [<args>]\n');
@@ -47,7 +52,9 @@ function printUsage(ctx: Ctx): void {
       '   show       Show various types of objects\n' +
       '   diff       Show changes between commits, commit and working tree, etc\n' +
       '   restore    Restore working tree files\n' +
-      '   reset      Reset current HEAD to the specified state',
+      '   reset      Reset current HEAD to the specified state\n' +
+      '   branch     List, create, or delete branches\n' +
+      '   switch     Switch branches',
   );
 }
 
@@ -121,7 +128,10 @@ function gitConfig(ctx: Ctx, args: string[]): boolean {
   const rest = args.filter((a) => a !== '--global' && a !== '--local');
   if (rest[0] === '--list' || rest[0] === '-l') {
     out.print('user.name=' + world.me.name + '\nuser.email=' + world.me.email + '\ninit.defaultbranch=main');
-    if (world.local) out.print('remote.origin.url=' + world.local.url + '\nbranch.main.remote=origin\nbranch.main.merge=refs/heads/main');
+    if (world.local) {
+      out.print('remote.origin.url=' + world.local.url + '\nremote.origin.fetch=+refs/heads/*:refs/remotes/origin/*');
+      for (const [b, up] of Object.entries(world.local.upstream)) out.print('branch.' + b + '.remote=origin\nbranch.' + b + '.merge=refs/heads/' + up);
+    }
     return true;
   }
   if (rest[0] === 'user.name' || rest[0] === 'user.email') {
@@ -140,53 +150,4 @@ function gitConfig(ctx: Ctx, args: string[]): boolean {
     return false;
   }
   return true;
-}
-
-/** git branch (list only for now). Creating branches arrives with the Junior rank. */
-function gitBranch(ctx: Ctx, args: string[]): boolean {
-  const L = ctx.world.local!;
-  const { out } = ctx;
-  const listing = args.every((a) => ['-a', '--all', '-r', '--remotes', '-v', '-vv', '--list'].includes(a));
-  if (!listing) {
-    const rank = ctx.lockedUntil('branch create');
-    if (rank) {
-      out.tip({
-        ar: 'إنشاء الفروع ينفتح لك في رتبة ' + rank + '. في رتبة Intern تشتغل على `main` بس.',
-        en: 'Creating branches unlocks at the ' + rank + ' rank. As an Intern you work on `main` only.',
-      });
-      return false;
-    }
-    out.tip({ ar: 'إنشاء الفروع لسا ما انبنى في المحاكي.', en: 'Creating branches isn’t built into the simulator yet.' });
-    return false;
-  }
-  const current = headBranch(L);
-  const showLocal = !args.includes('-r') && !args.includes('--remotes');
-  const showRemote = args.some((a) => ['-a', '--all', '-r', '--remotes'].includes(a));
-  if (showLocal) {
-    for (const b of Object.keys(L.branches).sort()) {
-      if (b === current) out.line([['* '], [b, 'g']]);
-      else out.print('  ' + b);
-    }
-  }
-  if (showRemote) {
-    const prefix = args.includes('-r') || args.includes('--remotes') ? 'origin/' : 'remotes/origin/';
-    out.line([['  ' + prefix + 'HEAD', 'r'], [' -> origin/' + L.remoteHead]]);
-    for (const b of Object.keys(L.remoteBranches).sort()) out.line([['  ' + prefix + b, 'r']]);
-  }
-  return true;
-}
-
-/** Only `git checkout -- <file>` for now; switching branches arrives with the Junior rank. */
-function gitCheckout(ctx: Ctx, args: string[]): boolean {
-  if (args[0] === '--') return gitRestore(ctx, args.slice(1));
-  const rank = ctx.lockedUntil('switch');
-  ctx.out.tip(
-    rank
-      ? {
-          ar: 'التنقل بين الفروع ينفتح لك في رتبة ' + rank + '. لو تبي ترجع ملف لآخر نسخة استخدم `git restore <file>`.',
-          en: 'Switching branches unlocks at the ' + rank + ' rank. To bring a file back to its last committed version, use `git restore <file>`.',
-        }
-      : { ar: 'التنقل بين الفروع لسا ما انبنى في المحاكي.', en: 'Switching branches isn’t built into the simulator yet.' },
-  );
-  return false;
 }

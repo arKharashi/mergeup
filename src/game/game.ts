@@ -275,6 +275,7 @@ export class Game {
       hooks: {
         onCommit: (c, changed, parentTree) => s.level.onCommit?.(api, c, changed, parentTree),
         onPush: (pushed, branch) => this.onPush(s, api, pushed, branch),
+        onPushRejected: (branch, reason) => s.level.onPushRejected?.(api, branch, reason),
       },
     };
     runLine(ctx, line);
@@ -420,7 +421,12 @@ export class Game {
     if (!w) return [];
     if (words.length <= 1) return SHELL_COMMANDS;
     if (words.length === 2 && words[0] === 'git') return GIT_SUBCOMMANDS;
-    if (w.local && inRepo(w)) return Object.keys(w.local.work);
+    if (w.local && inRepo(w)) {
+      const branches = Object.keys(w.local.branches);
+      if (words[0] === 'git' && (words[1] === 'switch' || words[1] === 'branch')) return branches;
+      if (words[0] === 'git' && words[1] === 'checkout') return [...branches, ...Object.keys(w.local.work)];
+      return Object.keys(w.local.work);
+    }
     return w.local ? [w.local.dir + '/'] : [];
   }
 

@@ -7,29 +7,34 @@ export function printEntries(out: Out, entries: StatusEntry[], tone: 'g' | 'r'):
   for (const x of entries) out.line([['\t' + (x.kind + ':').padEnd(12) + x.path, tone]]);
 }
 
-function printTracking(out: Out, L: LocalRepo, branch: string): void {
+/** How a branch stands against its upstream, as `git status` and `git switch` word it. Null without an upstream. */
+export function trackingInfo(L: LocalRepo, branch: string): string | null {
   const { ahead, behind, upstream } = aheadBehind(L, branch);
-  if (!upstream) return;
+  if (!upstream) return null;
   const up = "'origin/" + upstream + "'";
   const s = (n: number) => (n > 1 ? 's' : '');
   if (!(upstream in L.remoteBranches)) {
-    out.print('Your branch is based on ' + up + ', but the upstream is gone.\n  (use "git branch --unset-upstream" to fixup)');
-  } else if (ahead && behind) {
-    out.print(
-      'Your branch and ' + up + ' have diverged,\nand have ' + ahead + ' and ' + behind +
-        ' different commits each, respectively.\n  (use "git pull" if you want to integrate the remote branch with yours)',
-    );
-  } else if (ahead) {
-    out.print('Your branch is ahead of ' + up + ' by ' + ahead + ' commit' + s(ahead) + '.\n  (use "git push" to publish your local commits)');
-  } else if (behind) {
-    out.print(
-      'Your branch is behind ' + up + ' by ' + behind + ' commit' + s(behind) +
-        ', and can be fast-forwarded.\n  (use "git pull" to update your local branch)',
-    );
-  } else {
-    out.print('Your branch is up to date with ' + up + '.');
+    return 'Your branch is based on ' + up + ', but the upstream is gone.\n  (use "git branch --unset-upstream" to fixup)';
   }
-  out.print('');
+  if (ahead && behind) {
+    return (
+      'Your branch and ' + up + ' have diverged,\nand have ' + ahead + ' and ' + behind +
+      ' different commits each, respectively.\n  (use "git pull" if you want to integrate the remote branch with yours)'
+    );
+  }
+  if (ahead) return 'Your branch is ahead of ' + up + ' by ' + ahead + ' commit' + s(ahead) + '.\n  (use "git push" to publish your local commits)';
+  if (behind) {
+    return (
+      'Your branch is behind ' + up + ' by ' + behind + ' commit' + s(behind) +
+      ', and can be fast-forwarded.\n  (use "git pull" to update your local branch)'
+    );
+  }
+  return 'Your branch is up to date with ' + up + '.';
+}
+
+function printTracking(out: Out, L: LocalRepo, branch: string): void {
+  const info = trackingInfo(L, branch);
+  if (info) out.print(info + '\n');
 }
 
 export function gitStatus(ctx: Ctx, args: string[]): boolean {
@@ -44,7 +49,8 @@ export function gitStatus(ctx: Ctx, args: string[]): boolean {
       r[1] = x.kind === 'deleted' ? 'D' : 'M';
       rows.set(x.path, r);
     }
-    for (const [p, [i, w]] of [...rows].sort((a, b) => a[0].localeCompare(b[0]))) out.line([[i, 'g'], [w, 'r'], [' ' + p]]);
+    // git sorts paths by bytes, so README.md comes before about.html.
+    for (const [p, [i, w]] of [...rows].sort((a, b) => (a[0] < b[0] ? -1 : 1))) out.line([[i, 'g'], [w, 'r'], [' ' + p]]);
     for (const p of st.untracked) out.line([['??', 'r'], [' ' + p]]);
     return true;
   }

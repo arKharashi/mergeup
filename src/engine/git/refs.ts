@@ -42,9 +42,11 @@ export function decorations(L: LocalRepo, id: string): Segment[] {
   const hb = headBranch(L);
   if (L.head.kind === 'detached' && L.head.id === id) parts.push([['HEAD', 'c']]);
   if (hb && L.branches[hb] === id) parts.push([['HEAD -> ', 'c'], [hb, 'g']]);
-  for (const [b, tip] of Object.entries(L.branches)) if (b !== hb && tip === id) parts.push([[b, 'g']]);
-  for (const [b, tip] of Object.entries(L.remoteBranches)) if (tip === id) parts.push([['origin/' + b, 'r']]);
-  if (L.remoteBranches[L.remoteHead] === id) parts.push([['origin/HEAD', 'r']]);
+  // git's order: remote-tracking refs, then local branches, each by name in reverse.
+  for (const b of [...Object.keys(L.remoteBranches), 'HEAD'].sort().reverse()) {
+    if ((b === 'HEAD' ? L.remoteBranches[L.remoteHead] : L.remoteBranches[b]) === id) parts.push([['origin/' + b, 'r']]);
+  }
+  for (const b of Object.keys(L.branches).sort().reverse()) if (b !== hb && L.branches[b] === id) parts.push([[b, 'g']]);
   if (!parts.length) return [];
   const out: Segment[] = [[' (', 'y']];
   parts.forEach((p, i) => {

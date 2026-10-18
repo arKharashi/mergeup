@@ -1,4 +1,4 @@
-import type { Bilingual, Commit, LocalRepo, Person, RemoteRepo, Tree, World } from '../engine';
+import type { Bilingual, Commit, LocalRepo, Person, PushRejection, RemoteRepo, Tree, World } from '../engine';
 import type { RankId } from './ranks';
 import type { NpcId } from './team';
 
@@ -88,6 +88,8 @@ export interface Level {
   onCommit?(api: LevelApi, commit: Commit, changed: string[], parentTree: Tree): void;
   /** Return 'handled' to skip the game's default reaction to a push. */
   onPush?(api: LevelApi, pushed: Commit[], branch: string): 'handled' | void;
+  /** The team's repo turned a push to `branch` down, e.g. a protected `main`. */
+  onPushRejected?(api: LevelApi, branch: string, reason: PushRejection): void;
   onComplete?(api: LevelApi): void;
   solution(player: string): SolutionStep[];
 }
