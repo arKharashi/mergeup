@@ -1,4 +1,4 @@
-import { buildRemote, lines, type HistoryStep, type Person, type RemoteRepo } from '../engine';
+import { buildRemote, extendBranch, lines, type HistoryStep, type Person, type RemoteRepo } from '../engine';
 import { person } from '../game/team';
 
 /**
@@ -43,6 +43,23 @@ export const ABOUT_HTML =
   '  <link rel="stylesheet" href="style.css">\n</head>\n<body>\n  <h1>من نحن</h1>\n' +
   '  <p>بُن مقهى سعودي للقهوة المختصة. نحمّص البن كل أسبوع، ونقدّم القهوة السعودية بالهيل مع التمر.</p>\n</body>\n</html>\n';
 
+/** Level 5: the About page with a line for whether the café is open (its two texts live in the HTML), and the script that fills it. */
+export const ABOUT_HTML_WITH_STATUS = ABOUT_HTML.replace(
+  '</p>\n</body>',
+  '</p>\n  <p id="status" data-open="مفتوحين الحين" data-closed="مسكّرين الحين"></p>\n  <script src="about.js"></script>\n</body>',
+);
+
+/** The player's script as Khalid first sees it: a vague name on line 2, a console.log on line 3. */
+export const ABOUT_JS =
+  '// Shows whether the café is open right now.\n' +
+  'const d = new Date().getHours();\n' +
+  'console.log(d);\n' +
+  'const open = d >= 7 && d < 23;\n' +
+  "const status = document.getElementById('status');\n" +
+  'status.textContent = open ? status.dataset.open : status.dataset.closed;\n';
+
+export const ABOUT_JS_FIXED = ABOUT_JS.replace('const d =', 'const hour =').replace('console.log(d);\n', '').replace('d >= 7 && d < 23', 'hour >= 7 && hour < 23');
+
 /**
  * The project's history before the player's first day, plus the player's own commits from the levels
  * before `level` (default 2): their name in the README from level 1, the three tidy commits from level 3.
@@ -74,6 +91,19 @@ export function bunCafeHistory(player: Person | null, level = 2): RemoteRepo {
     );
   }
   return buildRemote(REPO_URL, steps);
+}
+
+/** Level 5: the player's `feature/about` from level 4, and the script they added to it afterwards. */
+export function withAboutBranch(remote: RemoteRepo, player: Person): void {
+  extendBranch(remote, 'feature/about', 'main', [
+    { author: player, iso: '2026-10-18T10:20:00+03:00', message: 'Add about page', changes: { 'about.html': ABOUT_HTML } },
+    {
+      author: player,
+      iso: '2026-10-18T15:40:00+03:00',
+      message: 'Show whether the cafe is open',
+      changes: { 'about.html': ABOUT_HTML_WITH_STATUS, 'about.js': ABOUT_JS },
+    },
+  ]);
 }
 
 /**

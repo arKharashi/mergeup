@@ -37,12 +37,14 @@ src/
   engine/    Pure git + shell simulator. No DOM, no game rules. Deterministic and unit-tested.
     git/     One file per command group: sync (clone/fetch/pull/push/remote), stage (add/restore/rm/reset),
              commit, history (log/show/diff), status, branch (branch/switch/checkout), refs (rev parsing,
-             decorations), format (dates, diffs, stats).
+             decorations), graph (log order and --graph lines), format (dates, diffs, stats).
+    host.ts  The code host (repo.bun.local): pull requests on the remote, reviews, merging with a merge commit.
     shell.ts Tokenizer (quotes, &&, ;, >, >>) and shell builtins (ls, cd, cat, echo, touch, rm, help...).
-  game/      Game class (sessions, objectives, reputation, stars, chat, files), Level types, ranks, NPC team, progress.
+  game/      Game class (sessions, objectives, reputation, stars, chat, files, pull requests), Level types, ranks,
+             NPC team, progress, ci (the team's lint check on pull requests).
   levels/    One file per level, plus fixtures.ts: the bun-cafe project and its scripted history.
-  ui/        React 19 components, one per panel: Header, Tabs, TaskCard, ChatPanel, Terminal, FilesPanel, Modals,
-             Toasts, composed by App. Plus gameContext (GameProvider, useGame), lang (LangProvider, useLang),
+  ui/        React 19 components, one per panel: Header, Tabs, TaskCard, ChatPanel, Terminal, RepoPage (pull requests,
+             from level 5), FilesPanel, Modals, Toasts, composed by App. Plus gameContext (GameProvider, useGame), lang (LangProvider, useLang),
              terminalBuffer, chatPace. No game logic.
   main.tsx   Creates the TerminalBuffer and the Game, resumes the last level, renders <App> under the providers.
 tests/       Engine behaviour vs real git, and every level's scripted solution must earn 3 stars.
@@ -90,9 +92,12 @@ Use `/new-level <n>` (see `.claude/commands/new-level.md`) or follow this checkl
 6. `hints`: tier 1 a nudge, tier 2 the commands, tier 3 the full solution (opening it costs the third star).
 7. `help`: the `help` cheat sheet, `[command, { ar, en }]`.
 8. Hooks for consequences: `onCommit`, `onPush` (return `'handled'` to skip the default commit-message check),
-   `api.rep(delta, { ar, en })`, `api.fail({ ar, en })`. Mistakes should cost reputation and teach, not dead-end.
-9. `solution(player)`: a script that beats the level. `tests/levels.test.ts` plays it, requires 3 stars, and checks
-   that everything the player reads along the way has Arabic and English.
+   `onPushRejected`, and for pull requests `onPullOpened` and `onPullMerged` (`api.review(who, pr, state, body, comments)`
+   leaves a review). `api.rep(delta, { ar, en })`, `api.fail({ ar, en })`. Mistakes should cost reputation and teach,
+   not dead-end. A level gets the pull request page by setting `remote.pulls = []` in `setup`.
+9. `solution(player)`: a script that beats the level: command lines, chat answers, saved files, and clicks on the
+   pull request page (`{ openPull, title }`, `{ merge }`). `tests/levels.test.ts` plays it, requires 3 stars, and checks
+   that everything the player reads along the way (reviews included) has Arabic and English.
 10. Add tests for the level's traps (what happens when the player does the wrong thing).
 11. `npm run check`, then play it in the browser at desktop and phone width. Extend `e2e/course.mjs` to play it, and run `npm run e2e`.
 
@@ -126,6 +131,8 @@ Use `/new-level <n>` (see `.claude/commands/new-level.md`) or follow this checkl
 - Fonts: IBM Plex Sans Arabic for all text, Arabic and English, on every device; SF Mono or Menlo for the terminal and
   code. Typing fields are 16px on touch screens, because iOS zooms into smaller ones.
 - Layout: desktop three columns (task + chat, terminal, files); tablet two with tabs; phone one pane with tabs.
+  From level 5 the pull request page shares the terminal's place: desktop gets a Terminal | Pull requests switch,
+  tablets and phones a fourth tab (short labels on phones).
   Check 390px wide: no horizontal page scroll.
 - The chat paces NPC messages ("typing…"): `useChatPace` reveals `session.chat` one message at a time.
   The level complete/fail card waits until every message is on screen.
@@ -160,9 +167,9 @@ The in-level repo is not saved: reloading the page restarts the current level.
 ## Roadmap
 
 - [x] Intern: levels 1–3
-- [ ] Junior: levels 4–6. Level 4 is built (`git branch`, `switch`, `checkout`, protected `main`). Still to build:
-      `merge` with conflict markers written to the working tree, `merge --abort`, a PR model (branch → main,
-      review comments, approve, CI status) and a PR page in the UI.
+- [ ] Junior: levels 4–6. Levels 4 and 5 are built (branches, protected `main`, pull requests with reviews, CI and
+      merging). Still to build for level 6: `git merge` with line-level conflict markers written to the working tree,
+      `merge --abort`, and an NPC (Sara) pushing to `main` mid-level.
 - [ ] Senior: levels 7–11. `stash`, `revert`, `cherry-pick`, `rebase` (plain and interactive), `push --force-with-lease`
       (already in `push`), time-based NPC triggers (Abu Fahd interrupts mid-task).
 - [ ] Team Lead: levels 12–16. Reviewing NPC PRs, review tone choices, merge ordering, `reflog`, branch protection

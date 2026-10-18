@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { LEVELS } from '../src/levels';
-import { REPO_URL } from '../src/levels/fixtures';
+import { mergeBase, reviewDecision } from '../src/engine';
+import { ABOUT_JS, ABOUT_JS_FIXED, REPO_URL } from '../src/levels/fixtures';
 import { PLAYER, makeGame, play } from './helpers';
 
 describe('every level', () => {
@@ -53,6 +54,10 @@ describe('every level', () => {
         ...lv.help.map(([, d]) => d),
         ...s.chat.filter((m) => m.who !== 'you').map((m) => m.text),
         ...out.tips,
+        // Reviews on the code host's pull requests.
+        ...(s.world.remote.pulls ?? []).flatMap((p) =>
+          p.events.flatMap((e) => (e.kind === 'review' ? [e.review.body, ...e.review.comments.map((c) => c.body)] : [])),
+        ),
       ];
       for (const c of copy) {
         expect(c.ar.trim(), c.en).not.toBe('');
@@ -328,6 +333,107 @@ describe('level 4: first branch', () => {
     expect(game.objectives().map((o) => o.done)).toEqual([true, false, false, false]);
     play(game, ['git add about.html', 'git commit -m "Add about page"', 'git push']);
     expect(game.session!.status).toBe('done');
+  });
+});
+
+describe('level 5: first pull request', () => {
+  const start = () => {
+    const made = makeGame();
+    let stars = 0;
+    made.game.on('complete', (e) => (stars = e.stars));
+    made.game.progress.unlocked = 5;
+    made.game.loadLevel(5);
+    return { ...made, stars: () => stars };
+  };
+  const khalid = (game: ReturnType<typeof makeGame>['game']) => game.session!.chat.filter((m) => m.who === 'khalid');
+  const commitAndPush = (game: ReturnType<typeof makeGame>['game'], content: string, message = 'Rename hour variable and remove console.log') =>
+    play(game, [{ write: 'about.js', content }, 'git add about.js', 'git commit -m "' + message + '"', 'git push']);
+
+  it('starts on feature/about with the script, ready for a pull request', () => {
+    const { game } = start();
+    const w = game.session!.world;
+    expect(w.local!.head).toEqual({ kind: 'branch', name: 'feature/about' });
+    expect(w.local!.upstream['feature/about']).toBe('feature/about');
+    expect(w.local!.work['about.js']).toBe(ABOUT_JS);
+    expect(game.pulls()).toEqual([]);
+    expect(game.pullCandidates()).toEqual(['feature/about']);
+  });
+
+  it('Khalid asks for two changes, CI fails, and the merge is blocked', () => {
+    const { game } = start();
+    const pr = game.openPull('feature/about', 'Add the About page')!;
+    expect(pr.number).toBe(1);
+    expect(game.pullCandidates()).toEqual([]);
+    const review = pr.events.at(-1);
+    expect(review?.kind === 'review' && review.review.comments.map((c) => c.line)).toEqual([2, 3]);
+    expect(reviewDecision(pr)).toBe('changes_requested');
+    expect(khalid(game)).toHaveLength(1);
+    const [lint] = game.checks(pr);
+    expect(lint!.ok).toBe(false);
+    expect(lint!.output).toEqual(['about.js', '  3:1  error  Unexpected console statement  no-console', '', '✖ 1 problem (1 error, 0 warnings)']);
+    expect(game.mergeBlockers(pr).map((b) => b.en)).toEqual(['The reviewer requested changes.', 'A required CI check is failing.']);
+    expect(game.mergePull(1)).toBe(false);
+    expect(game.objectives().map((o) => o.done)).toEqual([true, false, false, false]);
+  });
+
+  it('removing the console.log turns CI green, but Khalid still wants a clear name', () => {
+    const { game } = start();
+    game.openPull('feature/about', 'Add the About page');
+    commitAndPush(game, ABOUT_JS.replace('console.log(d);\n', ''), 'Remove the console.log from the about script');
+    const pr = game.pulls()![0]!;
+    expect(game.checks(pr)[0]!.ok).toBe(true);
+    expect(reviewDecision(pr)).toBe('changes_requested');
+    const last = pr.events.at(-1);
+    expect(last?.kind === 'review' && last.review.comments.map((c) => [c.line, c.body.en])).toEqual([[2, expect.stringContaining('`d` doesn’t say what it holds')]]);
+    expect(game.objectives().map((o) => o.done)).toEqual([true, true, false, false]);
+  });
+
+  it('renaming only where it is declared is caught', () => {
+    const { game } = start();
+    game.openPull('feature/about', 'Add the About page');
+    commitAndPush(game, ABOUT_JS_FIXED.replace('hour >= 7', 'd >= 7'));
+    const last = game.pulls()![0]!.events.at(-1);
+    expect(last?.kind === 'review' && last.review.comments.map((c) => [c.line, c.body.en])).toEqual([[3, expect.stringContaining('`d` is still used here')]]);
+  });
+
+  it('a fix pushed to a new branch doesn’t update the PR, and Khalid says where it goes', () => {
+    const { game } = start();
+    game.openPull('feature/about', 'Add the About page');
+    play(game, ['git switch -c feature/about-fix', { write: 'about.js', content: ABOUT_JS_FIXED }, 'git add about.js', 'git commit -m "Rename hour variable and remove console.log"', 'git push -u origin feature/about-fix']);
+    expect(khalid(game).at(-1)!.text.en).toContain('No need for a new branch');
+    expect(reviewDecision(game.pulls()![0]!)).toBe('changes_requested');
+    // Sending the same commit to the PR's branch fixes it.
+    game.run('git push origin feature/about-fix:feature/about');
+    expect(reviewDecision(game.pulls()![0]!)).toBe('approved');
+  });
+
+  it('a weak commit message costs reputation, and Khalid points it out', () => {
+    const { game, stars } = start();
+    const rep = game.progress.rep;
+    game.openPull('feature/about', 'Add the About page');
+    commitAndPush(game, ABOUT_JS_FIXED, 'fix');
+    expect(game.progress.rep).toBe(rep - 5);
+    expect(khalid(game).some((m) => m.text.ar.includes('`fix`') && m.text.en.includes('`fix`'))).toBe(true);
+    expect(reviewDecision(game.pulls()![0]!)).toBe('approved');
+    expect(game.mergePull(1)).toBe(true);
+    expect(stars()).toBe(2);
+  });
+
+  it('merging puts a merge commit on main, and git pull brings it to the player’s main', () => {
+    const { game, out } = start();
+    play(game, LEVELS[4]!.solution(PLAYER));
+    const w = game.session!.world;
+    const merge = w.remote.commits[w.remote.branches.main!]!;
+    expect(merge.parents).toHaveLength(2);
+    expect(merge.message).toBe('Merge pull request #1 from team/feature/about\n\nAdd the About page');
+    expect(merge.tree['about.js']).toBe(ABOUT_JS_FIXED);
+    expect(mergeBase(w.remote.commits, merge.parents[0]!, merge.parents[1]!)).toBe(merge.parents[0]);
+    expect(game.session!.status).toBe('done');
+    play(game, ['git switch main']);
+    out.take();
+    game.run('git pull');
+    expect(out.take()).toContain('Fast-forward');
+    expect(w.local!.branches.main).toBe(w.remote.branches.main);
   });
 });
 

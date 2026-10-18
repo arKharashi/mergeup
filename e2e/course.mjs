@@ -138,7 +138,7 @@ export async function course(browser, lang, engine) {
   r.check(await page.isHidden('#overlay'), 'Escape closes the complete card');
   r.check((await active(page)) === 'cmd', 'focus returns to the command line', await active(page));
   r.check(await page.isVisible('.task-status.done'), 'task card says the level is done');
-  r.check((await page.textContent('#starCount')) === '★ 3 / 12', 'header star count');
+  r.check((await page.textContent('#starCount')) === '★ 3 / 15', 'header star count');
   r.check((await page.locator('#track .cell.done').count()) === 1, 'track shows level 1 done');
   await page.click('.task-status.done .btn.primary');
 
@@ -235,19 +235,60 @@ export async function course(browser, lang, engine) {
   await tipAfter('git push', 'git push -u origin feature/about', 'git push -u origin feature/about', 'push without upstream: -u tip');
   await shot(page, tag + '-06-l4-branch');
   await cmd(page, 'git push -u origin feature/about');
-  await page.waitForSelector('#overlay .card #ok', { timeout: 10000 });
+  await page.waitForSelector('#overlay .card #next', { timeout: 10000 });
   r.check((await page.textContent('#overlay .stars')).replace(/\s/g, '') === '★★★' && (await page.locator('#overlay .stars .off').count()) === 0, 'level 4: 3 stars');
   r.check((await page.locator('.chat .msg[data-who="abufahd"]').last().innerText()).includes(L('خالد', 'Khalid')), 'Abu Fahd closes with the next step');
+  r.check((await page.textContent('#starCount')) === '★ 10 / 15', 'header star count after level 4');
+  await page.click('#next');
+
+  /* ---------- level 5: the first pull request ---------- */
+  await settle(page);
+  r.check((await page.textContent('#task .eyebrow')) === 'LEVEL 5 · JUNIOR', 'level 5 loaded');
+  r.check((await page.textContent('#prompt')).includes('(feature/about)'), 'level 5 starts on the feature branch');
+  r.check(await page.isVisible('#tabs [data-pane="web"]'), 'the pull request tab shows on desktop');
+  await page.click('#tabs [data-pane="web"]');
+  r.check(await page.isVisible('#web') && (await page.isHidden('#term')), 'the pull request page takes the terminal’s place');
+  await page.click('#comparePr');
+  r.check((await page.inputValue('#prTitle')) === 'Feature/about', 'the title starts as the branch name, like a real host');
+  await page.fill('#prTitle', 'Add the About page');
+  await page.click('#createPr');
+  await settle(page);
+  r.check((await page.locator('#prPage .event.review.changes_requested .rcomment').count()) === 2, 'Khalid leaves two line comments');
+  r.check(await page.isVisible('#prChecks.fail'), 'CI fails on the console.log');
+  r.check(await page.isDisabled('#mergePr'), 'merging is blocked');
+  r.check((await page.locator('.chat .msg[data-who="khalid"]').last().innerText()).includes(L('خالد', 'Khalid')), 'Khalid introduces himself in the chat');
+  await shot(page, tag + '-07-l5-review');
+  await page.click('#files button:has-text("about.js")');
+  const js = await page.inputValue('#edText');
+  await page.fill('#edText', js.replace('console.log(d);\n', ''));
+  await page.press('#edText', 'Control+s');
+  await page.click('#tabs [data-pane="term"]');
+  for (const line of ['git add about.js', 'git commit -m "Remove the console.log from the about script"', 'git push']) await cmd(page, line);
+  await settle(page);
+  r.check(await page.isVisible('#tabs [data-pane="web"] .dot'), 'a dot on the tab when Khalid reviews again');
+  await page.click('#tabs [data-pane="web"]');
+  r.check(await page.isVisible('#prChecks.ok') && (await page.isDisabled('#mergePr')), 'CI turns green, Khalid still blocks');
+  await page.fill('#edText', (await page.inputValue('#edText')).replace(/\bd\b/g, 'hour'));
+  await page.press('#edText', 'Control+s');
+  await page.click('#tabs [data-pane="term"]');
+  for (const line of ['git add about.js', 'git commit -m "Name the hour variable in the about script"', 'git push']) await cmd(page, line);
+  await page.click('#tabs [data-pane="web"]');
+  await page.click('#mergePr');
+  await page.click('#confirmMerge');
+  await page.waitForSelector('#overlay .card #ok', { timeout: 10000 });
+  r.check((await page.textContent('#overlay .stars')).replace(/\s/g, '') === '★★★', 'level 5: 3 stars');
   await page.click('#ok');
+  r.check(await page.isVisible('#mergeBox.done'), 'the page says the pull request is merged');
   r.check((await page.textContent('.task-status.done')).includes(L('قيد البناء', 'on the way')) && (await page.locator('.task-status .btn').count()) === 0, 'last level: no Next, more levels on the way');
-  r.check((await page.textContent('#starCount')) === '★ 10 / 12', 'header star count after level 4');
+  r.check((await page.textContent('#starCount')) === '★ 13 / 15', 'header star count after level 5');
 
   /* ---------- track, reload ---------- */
-  await page.click('#track .cell[data-level="5"]', { force: true });
-  r.check(await page.isHidden('#overlay') && (await page.textContent('#task .eyebrow')).startsWith('LEVEL 4'), 'an unbuilt level does nothing');
-  r.check((await page.getAttribute('#track .cell[data-level="5"]', 'title')).includes(L('قريباً', 'coming soon')), 'unbuilt level says coming soon');
+  await page.click('#track .cell[data-level="6"]', { force: true });
+  r.check(await page.isHidden('#overlay') && (await page.textContent('#task .eyebrow')).startsWith('LEVEL 5'), 'an unbuilt level does nothing');
+  r.check((await page.getAttribute('#track .cell[data-level="6"]', 'title')).includes(L('قريباً', 'coming soon')), 'unbuilt level says coming soon');
   await page.click('#track .cell[data-level="1"]');
   r.check((await page.textContent('#task .eyebrow')).startsWith('LEVEL 1'), 'a finished level opens without asking');
+  r.check(await page.isHidden('#tabs') && (await page.isVisible('#term')), 'without a pull request page, desktop has no tabs and shows the terminal');
   await cmd(page, 'git clone ' + REPO);
   await page.click('#track .cell[data-level="2"]');
   r.check((await page.textContent('#overlay h2')) === L('تنتقل للمستوى 2؟', 'Go to level 2?'), 'leaving a level with work asks first');
@@ -257,7 +298,7 @@ export async function course(browser, lang, engine) {
   await page.waitForSelector('#task .eyebrow');
   r.check((await page.textContent('#task .eyebrow')).startsWith('LEVEL 1') && (await page.isHidden('#overlay')), 'reload resumes the last level, no welcome');
   r.check((await page.getAttribute('html', 'lang')) === lang, 'reload keeps the language');
-  r.check((await page.textContent('#starCount')) === '★ 10 / 12', 'reload keeps the stars');
+  r.check((await page.textContent('#starCount')) === '★ 13 / 15', 'reload keeps the stars');
 
   /* ---------- switch language mid-level ---------- */
   await settle(page);

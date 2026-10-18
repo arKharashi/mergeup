@@ -99,8 +99,25 @@ export async function phone(browser, lang, engine, viewport = { width: 390, heig
   await pane('term');
   for (const line of ['git switch -c feature/about', 'git add about.html', 'git commit -m "Add about page"', 'git push -u origin feature/about']) await cmd(page, line);
   await fits('terminal after level 4');
+  await page.waitForSelector('#overlay .card #next', { timeout: 30000 });
+  await inView('#overlay #next', 'level 4 card');
+  await tap('#overlay #next');
+
+  /* ---------- level 5 ---------- */
+  await pane('web');
+  await fits('pull requests');
+  await tap('#comparePr');
+  await tap('#createPr');
+  await page.waitForSelector('#prChecks');
+  await fits('pull request with a review');
+  await shot(page, tag + '-6-pull-request');
+  await pane('term');
+  for (const line of ['echo "// Shows whether the café is open right now." > about.js', 'echo "const hour = new Date().getHours();" >> about.js', 'echo "const open = hour >= 7 && hour < 23;" >> about.js', 'git add about.js', 'git commit -m "Rename hour variable and remove console.log"', 'git push']) await cmd(page, line);
+  await pane('web');
+  await tap('#mergePr');
+  await tap('#confirmMerge');
   await page.waitForSelector('#overlay .card #ok', { timeout: 30000 });
-  await inView('#overlay #ok', 'level 4 card');
+  await inView('#overlay #ok', 'level 5 card');
   await tap('#overlay #ok');
   r.check(errors.length === 0, 'no console errors or warnings', errors.join(' | '));
   await ctx.close();
