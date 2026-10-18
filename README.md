@@ -1,8 +1,11 @@
 <div align="center">
 
-<img src="public/logo.svg" width="88" alt="MergeUp logo: two branches merge and rise">
-
-# MergeUp
+<h1>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/brand/mergeup-dark.png">
+    <img src="docs/brand/mergeup-light.png" width="380" alt="MergeUp">
+  </picture>
+</h1>
 
 **Learn git the way teams use it: by joining one.**
 
