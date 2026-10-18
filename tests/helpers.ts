@@ -40,6 +40,8 @@ export function play(game: Game, steps: SolutionStep[]): void {
   for (const step of steps) {
     if (typeof step === 'string') game.run(step);
     else if ('answer' in step) game.answer(step.answer, step.value);
-    else game.writeFile(step.write, step.content);
+    else if ('write' in step) game.writeFile(step.write, step.content);
+    else if ('openPull' in step) game.openPull(step.openPull, step.title);
+    else game.mergePull(step.merge);
   }
 }

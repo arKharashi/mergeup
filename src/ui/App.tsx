@@ -8,6 +8,7 @@ import { Header } from './Header';
 import { useLang } from './lang';
 import { Modals, type Modal } from './Modals';
 import { defaultPane, isVisible, isWide, type Pane } from './panes';
+import { RepoPage } from './RepoPage';
 import { Tabs } from './Tabs';
 import { TaskCard } from './TaskCard';
 import { Terminal, type TerminalHandle } from './Terminal';
@@ -39,9 +40,19 @@ export function App({ terminal }: { terminal: TerminalBuffer }) {
     });
   };
 
+  const dot = (pane: Pane) => setDots((d) => (d.has(pane) ? d : new Set(d).add(pane)));
   const shown = useChatPace(session, (m) => {
-    if (isPerson(m.who) && !isVisible('team', view.pane)) setDots((d) => (d.has('team') ? d : new Set(d).add('team')));
+    if (isPerson(m.who) && !isVisible('team', view.pane)) dot('team');
   });
+
+  // News on the pull request page (a review, a merge) while it's out of sight.
+  const pulls = game.pulls();
+  const activity = pulls?.reduce((n, p) => n + p.events.length + 1, 0) ?? 0;
+  const seen = useRef(activity);
+  useEffect(() => {
+    if (activity > seen.current && !isVisible('web', view.pane)) dot('web');
+    seen.current = activity;
+  }, [activity, view.pane]);
 
   useEffect(() => {
     if (view.pane !== 'term') return;
@@ -116,13 +127,14 @@ export function App({ terminal }: { terminal: TerminalBuffer }) {
       {/* Behind a card, the office can't be focused or clicked, and screen readers skip it. */}
       <div className="app" inert={!!modal}>
         <Header onPickLevel={pickLevel} />
-        <Tabs current={view.pane} dots={dots} onShow={showPane} />
+        <Tabs current={view.pane} dots={dots} web={!!pulls} onShow={showPane} />
         <main className="desk" id="desk" data-pane={view.pane}>
           <section className="col col-team" aria-label={t({ ar: 'المهمة والفريق', en: 'Task and team' })}>
             <TaskCard key={sid} onRewind={rewind} onNext={next ? () => load(next) : null} />
             <ChatPanel shown={shown} />
           </section>
           <Terminal ref={term} buffer={terminal} onRewind={rewind} />
+          {pulls && <RepoPage key={'pr' + sid} />}
           <FilesPanel key={sid} />
         </main>
       </div>

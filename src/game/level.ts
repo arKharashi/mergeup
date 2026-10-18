@@ -1,4 +1,4 @@
-import type { Bilingual, Commit, LocalRepo, Person, PushRejection, RemoteRepo, Tree, World } from '../engine';
+import type { Bilingual, Commit, LocalRepo, Person, PullRequest, PushRejection, RemoteRepo, ReviewComment, ReviewState, Tree, World } from '../engine';
 import type { RankId } from './ranks';
 import type { NpcId } from './team';
 
@@ -50,6 +50,8 @@ export interface LevelApi {
   rep(delta: number, reason: Bilingual): void;
   /** Ends the level as failed, with the reason shown to the player. */
   fail(reason: Bilingual): void;
+  /** A teammate reviews a pull request at its current head, as on the code host. */
+  review(who: NpcId, pr: PullRequest, state: ReviewState, body: Bilingual, comments?: ReviewComment[]): void;
 }
 
 export interface Objective {
@@ -68,8 +70,16 @@ export interface LevelStart {
   data?: Record<string, unknown>;
 }
 
-/** A scripted way to beat the level. Tests play it; it should earn 3 stars. */
-export type SolutionStep = string | { answer: string; value: string } | { write: string; content: string };
+/**
+ * A scripted way to beat the level. Tests play it; it should earn 3 stars.
+ * A step is a command line, a chat answer, a saved file, or a click on the code host: open a pull request, merge one.
+ */
+export type SolutionStep =
+  | string
+  | { answer: string; value: string }
+  | { write: string; content: string }
+  | { openPull: string; title: string }
+  | { merge: number };
 
 export interface Level {
   id: number;
@@ -90,6 +100,10 @@ export interface Level {
   onPush?(api: LevelApi, pushed: Commit[], branch: string): 'handled' | void;
   /** The team's repo turned a push to `branch` down, e.g. a protected `main`. */
   onPushRejected?(api: LevelApi, branch: string, reason: PushRejection): void;
+  /** The player opened a pull request on the code host. */
+  onPullOpened?(api: LevelApi, pr: PullRequest): void;
+  /** The player merged a pull request. */
+  onPullMerged?(api: LevelApi, pr: PullRequest): void;
   onComplete?(api: LevelApi): void;
   solution(player: string): SolutionStep[];
 }

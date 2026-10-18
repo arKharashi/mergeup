@@ -1,4 +1,5 @@
-export type Pane = 'team' | 'term' | 'files';
+/** `web` is the team repo's pull request page, from level 5. It shares the terminal's place. */
+export type Pane = 'team' | 'term' | 'files' | 'web';
 
 // Match the breakpoints in styles.css.
 const PHONE = 760;
@@ -9,13 +10,15 @@ const SHORT = 520;
 const phoneLayout = (): boolean => window.innerWidth <= PHONE || (window.innerWidth <= TABLET && window.innerHeight <= SHORT);
 
 /**
- * Desktop shows all three panes. Tablets show the task pane plus the terminal or the files.
+ * Desktop shows the task, the files, and the terminal or the pull request page.
+ * Tablets show the task pane plus one of the terminal, the files or the pull request page.
  * Phones show one pane at a time, switched by tabs.
  */
 export function isVisible(pane: Pane, current: Pane): boolean {
-  if (window.innerWidth > TABLET) return true;
+  const second = current === 'files' || current === 'web' ? current : 'term';
+  if (window.innerWidth > TABLET) return pane === 'team' || pane === 'files' || pane === (current === 'web' ? 'web' : 'term');
   if (phoneLayout()) return current === pane;
-  return pane === 'team' || (pane === 'files' ? current === 'files' : current !== 'files');
+  return pane === 'team' || pane === second;
 }
 
 /** The pane to start a level on. */

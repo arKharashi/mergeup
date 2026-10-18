@@ -1,10 +1,17 @@
 import {
+  addReview,
+  cannotOpen,
   computeStatus,
   headBranch,
   headTree,
   inRepo,
   isIgnored,
   isWeakMessage,
+  mergePull as mergeOnHost,
+  openPull as openOnHost,
+  pullConflicts,
+  pullTrees,
+  reviewDecision,
   runLine,
   GIT_SUBCOMMANDS,
   SHELL_COMMANDS,
@@ -12,11 +19,14 @@ import {
   type Commit,
   type Ctx,
   type Out,
+  type PullRequest,
   type World,
 } from '../engine';
+import { runChecks, type Check } from './ci';
 import type { Choice, Level, LevelApi, Question, SayOptions, Who } from './level';
 import { clamp, saveProgress, type KeyValueStore, type Progress, loadProgress } from './progress';
 import { lockedUntil, rankOfLevel, type Rank } from './ranks';
+import { person } from './team';
 
 export interface ChatMessage {
   seq: number;
@@ -218,6 +228,8 @@ export class Game {
       tip: (text) => this.out.tip(text),
       rep: (delta, reason) => this.rep(s, delta, reason),
       fail: (reason) => this.fail(s, reason),
+      review: (who, pr, state, body, comments = []) =>
+        addReview(pr, { by: person(who), state, body, comments, commit: pr.headTip, time: this.now() }),
     };
   }
 
@@ -359,6 +371,68 @@ export class Game {
     const rankAfter = this.playerRank();
     s.level.onComplete?.(api);
     this.emit('complete', { session: s, stars, promotedTo: rankAfter.id !== rankBefore.id ? rankAfter : null });
+  }
+
+  /* ---------------- code host: pull requests ---------------- */
+
+  /** The team repo's pull requests, or null when this level has no code host. */
+  pulls(): PullRequest[] | null {
+    return this.session?.world.remote.pulls ?? null;
+  }
+
+  /** Branches on the team's repo that could become a pull request into the default branch. */
+  pullCandidates(): string[] {
+    const remote = this.session?.world.remote;
+    if (!remote?.pulls) return [];
+    return Object.keys(remote.branches)
+      .filter((b) => !cannotOpen(remote, b, remote.defaultBranch))
+      .sort();
+  }
+
+  /** The CI checks on a pull request's latest commit. */
+  checks(pr: PullRequest): Check[] {
+    return runChecks(pullTrees(this.session!.world.remote, pr).head);
+  }
+
+  openPull(head: string, title: string, body = ''): PullRequest | null {
+    const s = this.session;
+    const remote = s?.world.remote;
+    if (!s || !remote?.pulls || s.status !== 'playing' || !title.trim()) return null;
+    if (cannotOpen(remote, head, remote.defaultBranch)) return null;
+    const pr = openOnHost(remote, { head, base: remote.defaultBranch, title: title.trim(), body: body.trim(), author: s.world.me, time: this.now() });
+    s.level.onPullOpened?.(this.api(s), pr);
+    this.check(s);
+    this.emit('change', undefined);
+    return pr;
+  }
+
+  /** Why the pull request can't be merged yet; empty when it can. A protected base needs an approval and green CI. */
+  mergeBlockers(pr: PullRequest): Bilingual[] {
+    const remote = this.session?.world.remote;
+    if (!remote || pr.state !== 'open') return [{ ar: 'طلب الدمج هذا مو مفتوح.', en: 'This pull request isn’t open.' }];
+    const why: Bilingual[] = [];
+    if (pullConflicts(remote, pr).length) {
+      why.push({ ar: 'فيه conflicts مع `' + pr.base + '` لازم تنحل.', en: 'This branch has conflicts with `' + pr.base + '` that must be resolved.' });
+    }
+    if (remote.protectedBranches.includes(pr.base)) {
+      const decision = reviewDecision(pr);
+      if (decision === 'changes_requested') why.push({ ar: 'المراجع طلب تعديلات.', en: 'The reviewer requested changes.' });
+      if (decision === 'review_required') why.push({ ar: 'يحتاج موافقة مراجع واحد على الأقل.', en: 'At least one approving review is required.' });
+      if (this.checks(pr).some((c) => !c.ok)) why.push({ ar: 'فحص الـ CI فاشل.', en: 'A required CI check is failing.' });
+    }
+    return why;
+  }
+
+  mergePull(number: number): boolean {
+    const s = this.session;
+    const remote = s?.world.remote;
+    const pr = remote?.pulls?.find((p) => p.number === number);
+    if (!s || !remote || !pr || s.status !== 'playing' || this.mergeBlockers(pr).length) return false;
+    if (Array.isArray(mergeOnHost(remote, pr, s.world.me, this.now()))) return false;
+    s.level.onPullMerged?.(this.api(s), pr);
+    this.check(s);
+    this.emit('change', undefined);
+    return true;
   }
 
   /* ---------------- files panel ---------------- */
