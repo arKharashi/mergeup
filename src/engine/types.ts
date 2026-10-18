@@ -1,3 +1,5 @@
+import type { PullRequest } from './host';
+
 /** File path -> file content. Paths are flat (no folders yet), e.g. "README.md". */
 export type Tree = Record<string, string>;
 
@@ -27,6 +29,8 @@ export interface RemoteRepo {
   defaultBranch: string;
   /** Branches that refuse direct pushes (Junior rank: "work through a PR"). */
   protectedBranches: string[];
+  /** Pull requests on the code host. Absent until a level turns the host's pull requests on. */
+  pulls?: PullRequest[];
 }
 
 export type Head = { kind: 'branch'; name: string } | { kind: 'detached'; id: string };

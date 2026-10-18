@@ -123,6 +123,36 @@ export function buildRemote(url: string, steps: HistoryStep[], opts: { branch?: 
   };
 }
 
+/** Adds scripted commits on top of `from` as `branch` of a built remote (used by level fixtures). */
+export function extendBranch(remote: RemoteRepo, branch: string, from: string, steps: HistoryStep[]): void {
+  let parent = remote.branches[from] ?? from;
+  let tree = remote.commits[parent]!.tree;
+  for (const s of steps) {
+    tree = { ...tree };
+    for (const [p, content] of Object.entries(s.changes)) {
+      if (content === null) delete tree[p];
+      else tree[p] = content;
+    }
+    const c = makeCommit({ tree, message: s.message, author: s.author, time: Date.parse(s.iso), parents: [parent] });
+    remote.commits[c.id] = c;
+    parent = c.id;
+  }
+  remote.branches[branch] = parent;
+}
+
+/** A clone on `branch` instead of the default branch, tracking it, as if the player had switched to it. */
+export function cloneOnBranch(remote: RemoteRepo, dir: string, branch: string): LocalRepo {
+  const L = cloneRepo(remote, dir);
+  const tip = remote.branches[branch]!;
+  L.branches[branch] = tip;
+  L.upstream[branch] = branch;
+  L.head = { kind: 'branch', name: branch };
+  L.previous = remote.defaultBranch;
+  L.index = { ...remote.commits[tip]!.tree };
+  L.work = { ...remote.commits[tip]!.tree };
+  return L;
+}
+
 /* ---------------- .gitignore ---------------- */
 
 export function ignoreRules(text: string | undefined): string[] {

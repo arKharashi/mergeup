@@ -1,6 +1,7 @@
 import type { Ctx, PushRejection } from '../context';
 import { treeDiff } from '../diff';
 import { short } from '../hash';
+import { notePush, openPullFor } from '../host';
 import { cloneRepo, computeStatus, headBranch, headId, headTree, isAncestor, isClean, setHead } from '../repo';
 import type { Commit, LocalRepo, RemoteRepo } from '../types';
 import { printStat } from './format';
@@ -332,6 +333,9 @@ export function gitPush(ctx: Ctx, args: string[]): boolean {
   for (const c of fresh) remote.commits[c.id] = c;
   remote.branches[dst] = localTip;
   L.remoteBranches[dst] = localTip;
+  // The host adds the new commits to an open pull request from this branch.
+  const pr = openPullFor(remote, dst);
+  if (pr) notePush(remote, pr, world.now());
 
   const objs = Math.max(3, fresh.length * 3);
   out.print(
