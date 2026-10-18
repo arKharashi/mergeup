@@ -118,8 +118,11 @@ Use `/new-level <n>` (see `.claude/commands/new-level.md`) or follow this checkl
   a `folder — bash — cols×rows` title), dark like GitHub's in both modes.
 - Colours are tokens in `src/styles.css`: light on `:root`, dark under `prefers-color-scheme` and `[data-theme="dark"]`.
   Never hard-code a colour in a component.
-- The logo (two branches merge and rise) is `public/logo.svg`, also the favicon and `apple-touch-icon.png`; in the app
-  it's the `Logo` component.
+- The brand: a navy branch and a green branch merge into one that rises as an arrow, beside the wordmark Merge**Up**
+  (navy `#081426`, green `#00CA72`, tokens `--brand-ink` and `--brand-green`, for the logo and wordmark only). The mark
+  is `public/logo.svg` and the `Logo` component; the favicon and `apple-touch-icon.png` put it on a navy tile. The README
+  lockups are `docs/brand/mergeup-light.png` and `-dark.png`; `public/social-preview.png` is the link preview, also
+  uploaded by hand as the repo's social preview (GitHub has no API for it).
 - Fonts: IBM Plex Sans Arabic for all text, Arabic and English, on every device; SF Mono or Menlo for the terminal and
   code. Typing fields are 16px on touch screens, because iOS zooms into smaller ones.
 - Layout: desktop three columns (task + chat, terminal, files); tablet two with tabs; phone one pane with tabs.

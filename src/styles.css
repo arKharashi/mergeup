@@ -1,7 +1,8 @@
 /* The office, laid out after Apple's Human Interface Guidelines and coloured after GitHub. Three panes on a gray
    background: the task and the team chat (iMessage-style bubbles), the terminal (a macOS Terminal window, dark like
    GitHub's) and the project files (a Finder-style list). On phones the panes become a segmented control.
-   GitHub uses two greens, and so does this: --accent is readable as text, --accent-fill carries white text. */
+   GitHub uses two greens, and so does this: --accent is readable as text, --accent-fill carries white text.
+   The brand's own navy and green (--brand-*) are only for the logo and the wordmark. */
 :root {
   color-scheme: light;
   /* Surfaces and text */
@@ -19,6 +20,9 @@
   --accent-fill: #1F883D;
   --accent-ink: #FFFFFF;
   --accent-soft: rgba(31, 136, 61, 0.12);
+  /* The brand, for the logo and the MergeUp wordmark only: the green is too light for running text. */
+  --brand-ink: #081426;
+  --brand-green: #00CA72;
   --focus: rgba(9, 105, 218, 0.4);
   --good: #1F883D;
   --good-ink: #1A7F37;
@@ -74,6 +78,7 @@
     --accent: #3FB950;
     --accent-fill: #238636;
     --accent-soft: rgba(63, 185, 80, 0.15);
+    --brand-ink: #FFFFFF;
     --focus: rgba(56, 139, 253, 0.55);
     --good: #238636;
     --good-ink: #3FB950;
@@ -111,6 +116,7 @@
   --accent: #3FB950;
   --accent-fill: #238636;
   --accent-soft: rgba(63, 185, 80, 0.15);
+  --brand-ink: #FFFFFF;
   --focus: rgba(56, 139, 253, 0.55);
   --good: #238636;
   --good-ink: #3FB950;
@@ -194,7 +200,11 @@ code, .mono { font-family: var(--f-mono); }
   gap: 8px;
 }
 .brand h1 .logo { flex: none; }
-.brand h1 b { color: var(--accent); font-weight: 700; }
+.brand h1 span { color: var(--brand-ink); }
+.brand h1 b { color: var(--brand-green); font-weight: 700; }
+.logo .ink { stroke: var(--brand-ink); }
+.logo .go { stroke: var(--brand-green); }
+.logo .go.fill { fill: var(--brand-green); }
 .brand small { color: var(--muted); font-size: 0.82rem; }
 .rank {
   display: inline-flex; align-items: center; gap: 6px;
