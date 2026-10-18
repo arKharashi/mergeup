@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { computeStatus, headId, headTree, tokenize } from '../src/engine';
+import { computeStatus, headId, headTree, mergePull, openPull, tokenize } from '../src/engine';
 import { REPO_URL, README_V2 } from '../src/levels/fixtures';
 import { makeGame, makeWorld } from './helpers';
 
@@ -641,5 +641,124 @@ describe('push a new branch', () => {
     expect(run('git push')).toContain(' ! [remote rejected] main -> main (protected branch hook declined)');
     expect(run('git push origin feature/about:main')).toContain(' ! [remote rejected] feature/about -> main (protected branch hook declined)');
     expect(seen).toEqual(['main protected', 'main protected']);
+  });
+});
+
+describe('history with a merged pull request', () => {
+  /** feature/about with two commits, pushed, opened as a pull request and merged on the host. */
+  const merged = () => {
+    const made = makeWorld({ cloned: true });
+    const { world, run } = made;
+    run('git switch -c feature/about');
+    run('echo about > about.html');
+    run('git add about.html');
+    run('git commit -m "Add about page"');
+    run('echo "const hour = new Date().getHours();" > about.js');
+    run('git add about.js');
+    run('git commit -m "Show whether the cafe is open"');
+    run('git push -u origin feature/about');
+    const pr = openPull(world.remote, { head: 'feature/about', base: 'main', title: 'Add the About page', body: '', author: world.me, time: world.now() });
+    mergePull(world.remote, pr, world.me, world.now());
+    return made;
+  };
+  const hashes = (s: string) => s.replace(/\b[0-9a-f]{40}\b/g, 'H').replace(/\b[0-9a-f]{7}\b/g, 'h');
+
+  it('pull fast-forwards main to the merge and lists the new files', () => {
+    const { run } = merged();
+    run('git switch main');
+    const text = run('git pull');
+    expect(hashes(text)).toBe(
+      'From https://repo.bun.local/team/bun-cafe\n   h..h  main       -> origin/main\nUpdating h..h\nFast-forward\n' +
+        ' about.html | 1 +\n about.js   | 1 +\n 2 files changed, 2 insertions(+)\n create mode 100644 about.html\n create mode 100644 about.js',
+    );
+  });
+
+  it('log shows the branch commits too, and --first-parent only main', () => {
+    const { run } = merged();
+    run('git switch main');
+    run('git pull');
+    expect(hashes(run('git log --oneline -4'))).toBe(
+      'h (HEAD -> main, origin/main, origin/HEAD) Merge pull request #1 from team/feature/about\n' +
+        'h (origin/feature/about, feature/about) Show whether the cafe is open\nh Add about page\nh Add ريم to the team list',
+    );
+    expect(hashes(run('git log --oneline --first-parent -2'))).toBe(
+      'h (HEAD -> main, origin/main, origin/HEAD) Merge pull request #1 from team/feature/about\nh Add ريم to the team list',
+    );
+  });
+
+  it('draws the merge in log --graph like git', () => {
+    const { run } = merged();
+    run('git switch main');
+    run('git pull');
+    expect(hashes(run('git log --oneline --graph -5'))).toBe(
+      '*   h (HEAD -> main, origin/main, origin/HEAD) Merge pull request #1 from team/feature/about\n' +
+        '|\\  \n' +
+        '| * h (origin/feature/about, feature/about) Show whether the cafe is open\n' +
+        '| * h Add about page\n' +
+        '|/  \n' +
+        '* h Add ريم to the team list\n' +
+        '* h Add team section to README',
+    );
+    const full = hashes(run('git log --graph -4')).split('\n');
+    expect(full.slice(0, 10)).toEqual([
+      '*   commit H (HEAD -> main, origin/main, origin/HEAD)',
+      '|\\  Merge: h h',
+      '| | Author: ريم <you@bun.team>',
+      expect.stringMatching(/^\| \| Date: {3}\w{3} \w{3} \d+ \d\d:\d\d:\d\d 2026 \+0300$/),
+      '| | ',
+      '| |     Merge pull request #1 from team/feature/about',
+      '| |     ',
+      '| |     Add the About page',
+      '| | ',
+      '| * commit H (origin/feature/about, feature/about)',
+    ]);
+    // The last branch commit: its column joins main's on the next line, and the gap before main is one column wide.
+    expect(full.slice(15, 22)).toEqual([
+      '| * commit H',
+      '|/  Author: ريم <you@bun.team>',
+      expect.stringMatching(/^\| {3}Date: {3}/),
+      '|   ',
+      '|       Add about page',
+      '| ',
+      '* commit H',
+    ]);
+  });
+
+  it('a root commit at the end of a graph has no column under it', () => {
+    const { run } = makeWorld({ cloned: true });
+    const lines = run('git log --graph').split('\n');
+    expect(lines.slice(-5)).toEqual([
+      expect.stringMatching(/^\* commit [0-9a-f]{40}$/),
+      expect.stringMatching(/^ {2}Author: /),
+      expect.stringMatching(/^ {2}Date: /),
+      '  ',
+      '      Initial commit: project skeleton',
+    ]);
+    expect(run('git log --graph --reverse')).toBe("fatal: options '--graph' and '--reverse' cannot be used together");
+  });
+
+  it('show on a merge prints the header and no diff, and --stat compares with the first parent', () => {
+    const { run } = merged();
+    run('git switch main');
+    run('git pull');
+    expect(hashes(run('git show HEAD')).split('\n').slice(1)).toEqual([
+      'Merge: h h',
+      'Author: ريم <you@bun.team>',
+      expect.stringMatching(/^Date: /),
+      '',
+      '    Merge pull request #1 from team/feature/about',
+      '    ',
+      '    Add the About page',
+      '',
+    ]);
+    expect(run('git show --stat HEAD')).toContain('    Add the About page\n\n about.html | 1 +\n about.js   | 1 +\n 2 files changed, 2 insertions(+)');
+  });
+
+  it('log separates commits with one blank line and leaves none at the end', () => {
+    const { run } = makeWorld({ cloned: true });
+    const text = run('git log -2 --stat');
+    expect(text).toMatch(/ 1 file changed, \d+ insertions?\(\+\)$/);
+    expect(text).toContain('1 file changed, 1 insertion(+)\n\ncommit ');
+    expect(run('git log --oneline --stat -1')).toMatch(/^[0-9a-f]{7} \(HEAD -> main, origin\/main, origin\/HEAD\) Add ريم to the team list\n README\.md \| 1 \+\n 1 file changed, 1 insertion\(\+\)$/);
   });
 });

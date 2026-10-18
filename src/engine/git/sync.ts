@@ -152,6 +152,10 @@ export function gitPull(ctx: Ctx): boolean {
   }
   out.print('Updating ' + short(mine) + '..' + short(theirs) + '\nFast-forward');
   printStat(out, from, to);
+  for (const p of changed) {
+    if (!(p in from)) out.print(' create mode 100644 ' + p);
+    else if (!(p in to)) out.print(' delete mode 100644 ' + p);
+  }
   setHead(L, theirs);
   for (const p of changed) {
     if (p in to) {

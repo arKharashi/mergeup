@@ -1,76 +1,88 @@
 import type { Ctx } from '../context';
 import { treeDiff } from '../diff';
 import { short } from '../hash';
-import type { Segment } from '../output';
 import { ancestors, firstLine, headId, headTree } from '../repo';
 import type { Commit, LocalRepo, Tree } from '../types';
 import { gitDate, printStat, printTreeDiff } from './format';
+import { Graph, prefixed, walkCommits } from './graph';
 import { decorations, parseRevsAndPaths, resolveRef } from './refs';
 
 const parentTree = (L: LocalRepo, c: Commit): Tree => (c.parents[0] ? L.commits[c.parents[0]]!.tree : {});
 
-function printHeader(ctx: Ctx, c: Commit, prefix = ''): void {
+/** commit, Merge, Author, Date and the message. `first` starts the commit line, `pre()` every line after it. */
+function printHeader(ctx: Ctx, c: Commit, first = '', pre: () => string = () => ''): void {
   const L = ctx.world.local!;
   const { out } = ctx;
-  const first: Segment[] = [[prefix ? '* ' : '', 'y'], ['commit ' + c.id, 'y'], ...decorations(L, c.id)];
-  out.line(first);
-  const pre = prefix ? '| ' : '';
-  if (c.parents.length > 1) out.print(pre + 'Merge: ' + c.parents.map(short).join(' '));
-  out.print(pre + 'Author: ' + c.author.name + ' <' + c.author.email + '>');
-  out.print(pre + 'Date:   ' + gitDate(c.time));
-  out.print(pre);
-  for (const l of c.message.split('\n')) out.print(pre + '    ' + l);
-  out.print(pre);
+  out.line([[first], ['commit ' + c.id, 'y'], ...decorations(L, c.id)]);
+  if (c.parents.length > 1) out.print(pre() + 'Merge: ' + c.parents.map(short).join(' '));
+  out.print(pre() + 'Author: ' + c.author.name + ' <' + c.author.email + '>');
+  out.print(pre() + 'Date:   ' + gitDate(c.time));
+  out.print(pre());
+  for (const l of c.message.split('\n')) out.print(pre() + '    ' + l);
 }
 
-/** git log [--oneline] [--stat] [-p] [--graph] [-n N] [--reverse] [<rev> | a..b] [-- <paths>] */
+/** git log [--oneline] [--stat] [-p] [--graph] [--first-parent] [-n N] [--reverse] [<rev> | a..b] [-- <paths>] */
 export function gitLog(ctx: Ctx, args: string[]): boolean {
   const L = ctx.world.local!;
   const { out } = ctx;
   const parsed = parseRevsAndPaths(L, out, args, [
-    '--oneline', '--stat', '-p', '--patch', '--graph', '--all', '--decorate', '--name-only', '--reverse', '--no-decorate',
+    '--oneline', '--stat', '-p', '--patch', '--graph', '--all', '--decorate', '--name-only', '--reverse', '--no-decorate', '--first-parent',
   ]);
   if (!parsed) return false;
   const { flags, refs, range, paths, n } = parsed;
+  if (flags['--graph'] && flags['--reverse']) {
+    out.print("fatal: options '--graph' and '--reverse' cannot be used together", 'r');
+    return false;
+  }
 
   const start = range ? refs[1]! : (refs[refs.length - 1] ?? headId(L));
   if (!start) {
     out.print("fatal: your current branch does not have any commits yet", 'r');
     return false;
   }
+  const firstParent = !!flags['--first-parent'];
+  const starts = flags['--all'] ? [start, ...Object.values(L.branches), ...Object.values(L.remoteBranches)] : [start];
   const exclude = range ? ancestors(L.commits, refs[0]!) : new Set<string>();
-
-  // Walk first parents, newest first. Merges show up once the Junior rank adds them.
-  let list: Commit[] = [];
-  let id: string | null = start;
-  while (id && list.length < n && L.commits[id]) {
-    if (exclude.has(id)) break;
-    const c: Commit = L.commits[id]!;
-    if (!paths.length || treeDiff(parentTree(L, c), c.tree, paths).length) list.push(c);
-    id = c.parents[0] ?? null;
-  }
+  let list = walkCommits(L.commits, starts, exclude, firstParent)
+    .filter((c) => !paths.length || treeDiff(parentTree(L, c), c.tree, paths).length)
+    .slice(0, n);
   if (flags['--reverse']) list = list.reverse();
 
-  const graph = !!flags['--graph'];
-  for (const c of list) {
-    if (flags['--oneline']) {
-      out.line([[graph ? '* ' : '', 'y'], [short(c.id), 'y'], ...decorations(L, c.id), [' ' + firstLine(c.message)]]);
+  const oneline = !!flags['--oneline'];
+  const shown = new Set(list.map((c) => c.id));
+  const graph = flags['--graph'] ? new Graph() : null;
+  const pre = () => (graph ? graph.next() : '');
+  const body = graph ? prefixed(out, pre) : out;
+  list.forEach((c, i) => {
+    if (graph) for (const l of graph.flush()) out.print(l);
+    if (i && !oneline) out.print(graph ? graph.gap() : '');
+    const parents = (firstParent ? c.parents.slice(0, 1) : c.parents).filter((p) => shown.has(p));
+    const first = graph ? graph.row(c, parents) : '';
+    if (oneline) {
+      out.line([[first], [short(c.id), 'y'], ...decorations(L, c.id), [' ' + firstLine(c.message)]]);
+      if (graph) for (const l of graph.flush()) out.print(l);
     } else {
-      printHeader(ctx, c, graph ? '*' : '');
+      printHeader(ctx, c, first, pre);
     }
+    // Like git, a merge shows no changes of its own in the log.
+    if (c.parents.length > 1) return;
+    const blank = () => {
+      if (!oneline) body.print('');
+    };
     if (flags['--stat']) {
-      printStat(out, parentTree(L, c), c.tree, paths);
-      out.print('');
+      blank();
+      printStat(body, parentTree(L, c), c.tree, paths);
     }
     if (flags['--name-only']) {
-      for (const p of treeDiff(parentTree(L, c), c.tree, paths)) out.print(p);
-      out.print('');
+      blank();
+      for (const p of treeDiff(parentTree(L, c), c.tree, paths)) body.print(p);
     }
     if (flags['-p'] || flags['--patch']) {
-      printTreeDiff(out, parentTree(L, c), c.tree, paths);
-      out.print('');
+      blank();
+      printTreeDiff(body, parentTree(L, c), c.tree, paths);
     }
-  }
+  });
+  if (graph) for (const l of graph.flush()) out.print(l);
   return true;
 }
 
@@ -103,10 +115,14 @@ export function gitShow(ctx: Ctx, args: string[]): boolean {
   for (const id of ids) {
     const c = L.commits[id]!;
     if (parsed.flags['--oneline']) out.line([[short(c.id), 'y'], ...decorations(L, c.id), [' ' + firstLine(c.message)]]);
-    else printHeader(ctx, c);
+    else {
+      printHeader(ctx, c);
+      out.print('');
+    }
     if (parsed.flags['--stat']) printStat(out, parentTree(L, c), c.tree, parsed.paths);
     else if (parsed.flags['--name-only']) for (const p of treeDiff(parentTree(L, c), c.tree, parsed.paths)) out.print(p);
-    else printTreeDiff(out, parentTree(L, c), c.tree, parsed.paths);
+    // A clean merge has no changes of its own to show (git's combined diff is empty).
+    else if (c.parents.length < 2) printTreeDiff(out, parentTree(L, c), c.tree, parsed.paths);
   }
   return true;
 }
