@@ -138,7 +138,7 @@ export async function course(browser, lang, engine) {
   r.check(await page.isHidden('#overlay'), 'Escape closes the complete card');
   r.check((await active(page)) === 'cmd', 'focus returns to the command line', await active(page));
   r.check(await page.isVisible('.task-status.done'), 'task card says the level is done');
-  r.check((await page.textContent('#starCount')) === '★ 3 / 9', 'header star count');
+  r.check((await page.textContent('#starCount')) === '★ 3 / 12', 'header star count');
   r.check((await page.locator('#track .cell.done').count()) === 1, 'track shows level 1 done');
   await page.click('.task-status.done .btn.primary');
 
@@ -211,18 +211,41 @@ export async function course(browser, lang, engine) {
   for (const line of ['git add menu.html', 'git commit -m "Add karak tea to the menu"', 'git add style.css', 'git commit -m "Increase menu font size"', 'git add prices.json', 'git commit -m "Lower Spanish latte price to 17"']) await cmd(page, line);
   r.check((await doneCount(page)) === 4, 'four objectives done before the push');
   await cmd(page, 'git push');
-  await page.waitForSelector('#overlay .card #ok', { timeout: 10000 });
+  await page.waitForSelector('#overlay .card #next', { timeout: 10000 });
   r.check((await page.textContent('#overlay h2')) === L('صرت Junior', 'You’re a Junior now'), 'promotion card');
-  r.check((await page.textContent('#overlay .card')).includes('7 / 9'), 'total stars on the last built level');
   r.check((await page.textContent('#rank')).includes('Junior'), 'rank chip shows Junior');
   await shot(page, tag + '-05-promotion');
+  await page.click('#next');
+
+  /* ---------- level 4: main is protected ---------- */
+  await settle(page);
+  r.check((await page.textContent('#task .eyebrow')) === 'LEVEL 4 · JUNIOR', 'level 4 loaded');
+  r.check((await page.textContent('#files button:has-text("about.html") .badge')) === 'U', 'the About page waits as a new file');
+  r.check((await page.textContent('#prompt')).includes('(main)'), 'level 4 starts on main');
+  await cmd(page, 'git add about.html');
+  await cmd(page, 'git commit -m "Add about page"');
+  await cmd(page, 'git push');
+  await settle(page);
+  r.check((await termText(page)).includes('(protected branch hook declined)'), 'push to main: rejected like a real host');
+  r.check((await page.locator('.chat .msg[data-who="abufahd"]').last().innerText()).includes('feature/about'), 'Abu Fahd explains branches after the rejection');
+  r.check((await doneCount(page)) === 0, 'nothing ticks after the rejected push');
+  await cmd(page, 'git switch -c feature/about');
+  r.check((await page.textContent('#prompt')).includes('(feature/about)'), 'prompt follows the new branch');
+  r.check((await doneCount(page)) === 2, 'the branch takes the commit along: objectives 1 and 2');
+  await tipAfter('git push', 'git push -u origin feature/about', 'git push -u origin feature/about', 'push without upstream: -u tip');
+  await shot(page, tag + '-06-l4-branch');
+  await cmd(page, 'git push -u origin feature/about');
+  await page.waitForSelector('#overlay .card #ok', { timeout: 10000 });
+  r.check((await page.textContent('#overlay .stars')).replace(/\s/g, '') === '★★★' && (await page.locator('#overlay .stars .off').count()) === 0, 'level 4: 3 stars');
+  r.check((await page.locator('.chat .msg[data-who="abufahd"]').last().innerText()).includes(L('خالد', 'Khalid')), 'Abu Fahd closes with the next step');
   await page.click('#ok');
   r.check((await page.textContent('.task-status.done')).includes(L('قيد البناء', 'on the way')) && (await page.locator('.task-status .btn').count()) === 0, 'last level: no Next, more levels on the way');
+  r.check((await page.textContent('#starCount')) === '★ 10 / 12', 'header star count after level 4');
 
   /* ---------- track, reload ---------- */
-  await page.click('#track .cell[data-level="4"]', { force: true });
-  r.check(await page.isHidden('#overlay') && (await page.textContent('#task .eyebrow')).startsWith('LEVEL 3'), 'an unbuilt level does nothing');
-  r.check((await page.getAttribute('#track .cell[data-level="4"]', 'title')).includes(L('قريباً', 'coming soon')), 'unbuilt level says coming soon');
+  await page.click('#track .cell[data-level="5"]', { force: true });
+  r.check(await page.isHidden('#overlay') && (await page.textContent('#task .eyebrow')).startsWith('LEVEL 4'), 'an unbuilt level does nothing');
+  r.check((await page.getAttribute('#track .cell[data-level="5"]', 'title')).includes(L('قريباً', 'coming soon')), 'unbuilt level says coming soon');
   await page.click('#track .cell[data-level="1"]');
   r.check((await page.textContent('#task .eyebrow')).startsWith('LEVEL 1'), 'a finished level opens without asking');
   await cmd(page, 'git clone ' + REPO);
@@ -234,7 +257,7 @@ export async function course(browser, lang, engine) {
   await page.waitForSelector('#task .eyebrow');
   r.check((await page.textContent('#task .eyebrow')).startsWith('LEVEL 1') && (await page.isHidden('#overlay')), 'reload resumes the last level, no welcome');
   r.check((await page.getAttribute('html', 'lang')) === lang, 'reload keeps the language');
-  r.check((await page.textContent('#starCount')) === '★ 7 / 9', 'reload keeps the stars');
+  r.check((await page.textContent('#starCount')) === '★ 10 / 12', 'reload keeps the stars');
 
   /* ---------- switch language mid-level ---------- */
   await settle(page);

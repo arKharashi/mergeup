@@ -221,6 +221,116 @@ describe('level 3: tidy commits', () => {
   });
 });
 
+describe('level 4: first branch', () => {
+  const start = (): ReturnType<typeof makeGame> & { stars: () => number } => {
+    const made = makeGame();
+    let stars = 0;
+    made.game.on('complete', (e) => (stars = e.stars));
+    made.game.progress.unlocked = 4;
+    made.game.loadLevel(4);
+    return { ...made, stars: () => stars };
+  };
+  const fromAbuFahd = (game: ReturnType<typeof makeGame>['game']) => game.session!.chat.filter((m) => m.who === 'abufahd');
+
+  it('starts on a protected main, with the About page drafted and the Junior commands open', () => {
+    const { game, out } = start();
+    const w = game.session!.world;
+    expect(w.remote.protectedBranches).toEqual(['main']);
+    expect(w.local!.work['about.html']).toContain('<h1>من نحن</h1>');
+    expect(game.objectives().map((o) => o.done)).toEqual([false, false, false, false]);
+    out.take();
+    game.run('git log --oneline -1');
+    expect(out.take()).toContain('Lower Spanish latte price to 17');
+  });
+
+  it('rejects a push to main, and Abu Fahd explains branches once', () => {
+    const { game, out, stars } = start();
+    const rep = game.progress.rep;
+    const base = game.session!.world.remote.branches.main;
+    play(game, ['git add about.html', 'git commit -m "Add about page"']);
+    out.take();
+    game.run('git push');
+    expect(out.take()).toContain(' ! [remote rejected] main -> main (protected branch hook declined)');
+    expect(game.session!.world.remote.branches.main).toBe(base);
+    const told = fromAbuFahd(game).slice(2);
+    expect(told).toHaveLength(2);
+    expect(told[1]!.text.ar).toContain('`feature/`');
+    expect(told[1]!.text.en).toContain('`feature/`');
+    game.run('git push');
+    expect(fromAbuFahd(game)).toHaveLength(4);
+    expect(game.progress.rep).toBe(rep);
+    // The commit on main comes along to the new branch.
+    play(game, ['git switch -c feature/about', 'git push -u origin feature/about']);
+    expect(game.session!.status).toBe('done');
+    expect(game.session!.world.remote.branches.main).toBe(base);
+    expect(stars()).toBe(3);
+    // He already explained why, so the closing message only says where the page is.
+    expect(fromAbuFahd(game)).toHaveLength(5);
+    expect(fromAbuFahd(game).at(-1)!.text.en).toContain('next to `main`, not inside it');
+  });
+
+  it('explains why at the end to a player who made the branch first', () => {
+    const { game } = start();
+    play(game, LEVELS[3]!.solution(PLAYER));
+    const closing = fromAbuFahd(game).slice(2).map((m) => m.text.en);
+    expect(closing).toHaveLength(2);
+    expect(closing[0]).toContain('Why a branch?');
+    expect(closing[1]).toContain('next to `main`, not inside it');
+  });
+
+  it('a branch without feature/ costs reputation, and renaming it fixes the level', () => {
+    const { game, stars } = start();
+    const rep = game.progress.rep;
+    play(game, ['git switch -c about', 'git add about.html', 'git commit -m "Add about page"', 'git push -u origin about']);
+    expect(game.session!.status).toBe('playing');
+    expect(game.session!.repLost).toBe(true);
+    expect(game.progress.rep).toBe(rep - 2 + 3);
+    const said = fromAbuFahd(game).at(-1)!.text;
+    expect(said.ar).toContain('`git branch -m about feature/about`');
+    expect(said.en).toContain('`git branch -m about feature/about`');
+    expect(game.objectives().map((o) => o.done)).toEqual([false, false, false, true]);
+    play(game, ['git switch main', 'git branch -m about feature/about', 'git switch feature/about', 'git push -u origin feature/about']);
+    expect(game.session!.status).toBe('done');
+    expect(stars()).toBe(2);
+  });
+
+  it('a commit on a branch without feature/ gets a rename tip before any push', () => {
+    const { game, out, stars } = start();
+    play(game, ['git switch -c feature', 'git add about.html']);
+    expect(game.objectives()[0]!.done).toBe(false);
+    game.run('git commit -m "Add about page"');
+    expect(out.tips.at(-1)!.en).toContain('`git branch -m feature/about`');
+    play(game, ['git branch -m feature/about', 'git push -u origin feature/about']);
+    expect(game.session!.status).toBe('done');
+    expect(stars()).toBe(3);
+  });
+
+  it('pushing without -u is caught, and pushing again with -u finishes', () => {
+    const { game, out, stars } = start();
+    play(game, ['git switch -c feature/about', 'git add about.html', 'git commit -m "Add about page"']);
+    out.take();
+    game.run('git push');
+    expect(out.take()).toContain('fatal: The current branch feature/about has no upstream branch.');
+    expect(game.objectives()[2]!.done).toBe(false);
+    game.run('git push origin feature/about');
+    expect(out.tips.at(-1)!.en).toContain('`git push -u origin feature/about`');
+    expect(game.objectives().map((o) => o.done)).toEqual([true, true, false, true]);
+    game.run('git push -u origin feature/about');
+    expect(out.take()).toContain("branch 'feature/about' set up to track 'origin/feature/about'.\nEverything up-to-date");
+    expect(game.session!.status).toBe('done');
+    expect(stars()).toBe(3);
+  });
+
+  it('a pushed feature branch without the About page is not enough', () => {
+    const { game, out } = start();
+    play(game, ['git switch -c feature/about', 'git push -u origin feature/about']);
+    expect(out.tips.at(-1)!.en).toContain('`about.html` isn’t on it');
+    expect(game.objectives().map((o) => o.done)).toEqual([true, false, false, false]);
+    play(game, ['git add about.html', 'git commit -m "Add about page"', 'git push']);
+    expect(game.session!.status).toBe('done');
+  });
+});
+
 describe('progress', () => {
   it('survives a reload through the store', async () => {
     const { memoryStore } = await import('../src/game/progress');

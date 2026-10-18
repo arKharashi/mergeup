@@ -157,9 +157,9 @@ The in-level repo is not saved: reloading the page restarts the current level.
 ## Roadmap
 
 - [x] Intern: levels 1–3
-- [ ] Junior: levels 4–6. Engine first: `git branch <name>`, `switch` (`-c`), `checkout <branch>`, `merge`
-      with conflict markers written to the working tree, `merge --abort`, protected `main` (already in `push`),
-      a PR model (branch → main, review comments, approve, CI status) and a PR page in the UI.
+- [ ] Junior: levels 4–6. Level 4 is built (`git branch`, `switch`, `checkout`, protected `main`). Still to build:
+      `merge` with conflict markers written to the working tree, `merge --abort`, a PR model (branch → main,
+      review comments, approve, CI status) and a PR page in the UI.
 - [ ] Senior: levels 7–11. `stash`, `revert`, `cherry-pick`, `rebase` (plain and interactive), `push --force-with-lease`
       (already in `push`), time-based NPC triggers (Abu Fahd interrupts mid-task).
 - [ ] Team Lead: levels 12–16. Reviewing NPC PRs, review tone choices, merge ordering, `reflog`, branch protection

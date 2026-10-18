@@ -37,11 +37,18 @@ export const STYLE_FONT_16 = STYLE_V1.replace('font-size: 14px', 'font-size: 16p
 
 export const ENV_FILE = 'DB_PASSWORD=bun-secret-2026\n';
 
+/** The About page the player drafted before level 4. */
+export const ABOUT_HTML =
+  '<!doctype html>\n<html lang="ar" dir="rtl">\n<head>\n  <meta charset="utf-8">\n  <title>من نحن | بُن</title>\n' +
+  '  <link rel="stylesheet" href="style.css">\n</head>\n<body>\n  <h1>من نحن</h1>\n' +
+  '  <p>بُن مقهى سعودي للقهوة المختصة. نحمّص البن كل أسبوع، ونقدّم القهوة السعودية بالهيل مع التمر.</p>\n</body>\n</html>\n';
+
 /**
- * The project's history before the player's first day, plus (optionally)
- * the player's level-1 commit. Commit ids are stable for a given player name.
+ * The project's history before the player's first day, plus the player's own commits from the levels
+ * before `level` (default 2): their name in the README from level 1, the three tidy commits from level 3.
+ * Level 1 passes no player. Commit ids are stable for a given player name.
  */
-export function bunCafeHistory(player: Person | null): RemoteRepo {
+export function bunCafeHistory(player: Person | null, level = 2): RemoteRepo {
   const steps: HistoryStep[] = [
     { author: person('abufahd'), iso: '2026-10-04T09:10:00+03:00', message: 'Initial commit: project skeleton', changes: { 'README.md': README_V1, 'index.html': INDEX_HTML } },
     { author: person('sara'), iso: '2026-10-05T11:32:00+03:00', message: 'Add menu page', changes: { 'menu.html': MENU_V1 } },
@@ -57,6 +64,14 @@ export function bunCafeHistory(player: Person | null): RemoteRepo {
       message: 'Add ' + player.name + ' to the team list',
       changes: { 'README.md': readmeWithPlayer(player.name) },
     });
+  }
+  if (player && level > 3) {
+    steps.push(
+      { author: player, iso: '2026-10-17T10:05:00+03:00', message: 'Ignore local env file', changes: { '.gitignore': '.env\n' } },
+      { author: player, iso: '2026-10-17T10:08:00+03:00', message: 'Add karak tea to the menu', changes: { 'menu.html': MENU_WITH_KARAK } },
+      { author: player, iso: '2026-10-17T10:11:00+03:00', message: 'Increase menu font size', changes: { 'style.css': STYLE_FONT_16 } },
+      { author: player, iso: '2026-10-17T10:14:00+03:00', message: 'Lower Spanish latte price to 17', changes: { 'prices.json': PRICES_LATTE_17 } },
+    );
   }
   return buildRemote(REPO_URL, steps);
 }

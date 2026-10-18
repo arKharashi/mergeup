@@ -137,10 +137,10 @@ export async function sizes(browser, lang, engine, list = SIZES, shots = new Set
       if (!(await page.locator('#cmd').isVisible())) await page.locator('#tabs [data-pane="term"]').click();
       for (const line of ['echo ".env" > .gitignore', 'git add .gitignore', 'git commit -m "Ignore local env file"', 'git add menu.html', 'git commit -m "Add karak tea to the menu"', 'git add style.css', 'git commit -m "Increase menu font size"', 'git add prices.json', 'git commit -m "Lower Spanish latte price to 17"', 'git push'])
         await cmd(page, line);
-      await page.waitForSelector('#overlay .card #ok', { timeout: 10000 });
+      await page.waitForSelector('#overlay .card #next', { timeout: 10000 });
       verify(await page.evaluate(measure), 'promotion card');
-      await page.locator('#overlay #ok').scrollIntoViewIfNeeded();
-      r.check(await page.locator('#overlay #ok').isVisible(), `${id} promotion card: OK reachable`);
+      await page.locator('#overlay #next').scrollIntoViewIfNeeded();
+      r.check(await page.locator('#overlay #next').isVisible(), `${id} promotion card: Next reachable`);
       if (shots.has(id)) await shot(page, `size-${lang}-${id}-card`);
       r.check(errors.length === 0, `${id} card: no console errors`, errors.join(' | '));
       await ctx.close();

@@ -88,12 +88,20 @@ export async function phone(browser, lang, engine, viewport = { width: 390, heig
   ])
     await cmd(page, line);
   await fits('terminal after level 3');
-  await page.waitForSelector('#overlay .card #ok', { timeout: 30000 });
-  await inView('#overlay #ok', 'promotion card');
+  await page.waitForSelector('#overlay .card #next', { timeout: 30000 });
+  await inView('#overlay #next', 'promotion card');
   await fits('promotion card');
   await shot(page, tag + '-5-promotion');
-  await tap('#overlay #ok');
+  await tap('#overlay #next');
   r.check((await page.textContent('#rank')).includes('Junior'), 'promoted to Junior');
+
+  /* ---------- level 4 ---------- */
+  await pane('term');
+  for (const line of ['git switch -c feature/about', 'git add about.html', 'git commit -m "Add about page"', 'git push -u origin feature/about']) await cmd(page, line);
+  await fits('terminal after level 4');
+  await page.waitForSelector('#overlay .card #ok', { timeout: 30000 });
+  await inView('#overlay #ok', 'level 4 card');
+  await tap('#overlay #ok');
   r.check(errors.length === 0, 'no console errors or warnings', errors.join(' | '));
   await ctx.close();
   return r;
